@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { useApp } from '../context/AppContext';
 import { WeekCard } from './WeekCard';
 import { WeekDetailModal } from './WeekDetail';
@@ -157,7 +158,7 @@ export const Dashboard: React.FC = () => {
       )}
 
       {/* Suggest Theme Dialog Popup Modal */}
-      {showAddModal && (
+      {showAddModal && createPortal(
         <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
           <div className="modal-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '460px' }}>
             <div className="modal-header">
@@ -240,7 +241,8 @@ export const Dashboard: React.FC = () => {
               </form>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

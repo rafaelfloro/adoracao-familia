@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { useApp } from '../context/AppContext';
 import type { BibleVerse, DiscussionQuestion, GeneratedContent, JwLink } from '../types';
 import { WEEK_TYPE_LABELS, USERS } from '../types';
@@ -130,7 +131,7 @@ export const WeekDetailModal: React.FC<WeekDetailModalProps> = ({ weekId, onClos
     });
   };
 
-  return (
+  return createPortal(
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-container" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
@@ -490,6 +491,7 @@ export const WeekDetailModal: React.FC<WeekDetailModalProps> = ({ weekId, onClos
 
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

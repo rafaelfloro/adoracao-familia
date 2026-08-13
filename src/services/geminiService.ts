@@ -170,7 +170,6 @@ export const generateFamilyWorshipContent = async (
     model: modelName || 'gemini-3.5-flash',
     contents: FAMILY_WORSHIP_KNOWLEDGE + '\n\n' + buildPrompt(week),
     config: {
-      tools: [{ googleSearch: {} }],
       temperature: 0.75,
     },
   });
