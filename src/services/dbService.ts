@@ -31,7 +31,15 @@ export const loadSettings = (): AppSettings => {
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
     if (!raw) return DEFAULT_SETTINGS;
-    return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+    const parsed = JSON.parse(raw);
+    return {
+      ...DEFAULT_SETTINGS,
+      ...parsed,
+      // Fallback to env variables if stored values are empty strings
+      geminiApiKey: parsed.geminiApiKey || DEFAULT_SETTINGS.geminiApiKey,
+      supabaseUrl: parsed.supabaseUrl || DEFAULT_SETTINGS.supabaseUrl,
+      supabaseAnonKey: parsed.supabaseAnonKey || DEFAULT_SETTINGS.supabaseAnonKey,
+    };
   } catch {
     return DEFAULT_SETTINGS;
   }
