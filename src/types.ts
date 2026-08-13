@@ -81,7 +81,7 @@ export const USERS: User[] = [
     fullName: 'Rafael Floro',
     password: 'HaKuna890-',
     initials: 'RF',
-    color: '#5b3c88',
+    color: '#3070b3',
   },
   {
     id: 'gracy',
