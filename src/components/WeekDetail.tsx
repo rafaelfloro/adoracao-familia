@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import type { BibleVerse, DiscussionQuestion, GeneratedContent, JwLink } from '../types';
 import { WEEK_TYPE_LABELS, USERS } from '../types';
 import { getWeekRangeString } from '../utils/dateUtils';
-import { BookIcon, TvIcon, DocIcon, SparklesIcon, EditIcon } from './Icons';
+import { BookIcon, TvIcon, DocIcon, SparklesIcon, EditIcon, RobotIcon } from './Icons';
 
 interface WeekDetailModalProps {
   weekId: string;
@@ -203,10 +203,16 @@ export const WeekDetailModal: React.FC<WeekDetailModalProps> = ({ weekId, onClos
                   </h2>
                 )}
                 <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '6px' }}>
-                  {week.type !== 'free' && responsible && (
-                    <span className="badge" style={{ background: `${responsible.color}15`, color: responsible.color, fontWeight: 700 }}>
-                      {responsible.name}
-                    </span>
+                  {week.type !== 'free' && (
+                    (week.type === 'meeting_prep' || week.type === 'broadcast') ? (
+                      <span className="badge" style={{ background: 'var(--c-primary-20)', color: 'var(--c-primary)', fontWeight: 700 }}>
+                        Família
+                      </span>
+                    ) : responsible && (
+                      <span className="badge" style={{ background: `${responsible.color}15`, color: responsible.color, fontWeight: 700 }}>
+                        {responsible.name}
+                      </span>
+                    )
                   )}
                   <span className="badge badge-primary" style={{ background: 'var(--c-primary-light)', color: 'var(--c-primary)' }}>
                     {WEEK_TYPE_LABELS[week.type]}
@@ -292,7 +298,9 @@ export const WeekDetailModal: React.FC<WeekDetailModalProps> = ({ weekId, onClos
           {!gc && !state.isLoading && (week.type === 'theme' || week.type === 'free') && (
             <div className="card animate-up" style={{ marginBottom: '20px', border: '1px dashed var(--c-border)' }}>
               <div className="generate-cta" style={{ background: 'var(--c-surface)', borderRadius: 'var(--r-md)' }}>
-                <div className="generate-cta-icon" style={{ color: 'var(--c-accent)' }}>✨</div>
+                <div className="generate-cta-icon" style={{ color: 'var(--c-accent)', display: 'flex', justifyContent: 'center' }}>
+                  <SparklesIcon size={38} />
+                </div>
                 <h3 className="generate-cta-title">Gerar Roteiro de Estudo</h3>
                 <p className="generate-cta-desc">
                   {week.type === 'free' ? (
@@ -309,8 +317,8 @@ export const WeekDetailModal: React.FC<WeekDetailModalProps> = ({ weekId, onClos
                     + Definir Tema
                   </button>
                 ) : (
-                  <button className="btn btn-primary" style={{ background: 'var(--c-accent)', color: 'white', border: 'none' }} onClick={handleGenerate} disabled={state.isLoading}>
-                    ✨ Gerar com IA
+                  <button className="btn btn-primary" style={{ background: 'var(--c-accent)', color: 'white', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }} onClick={handleGenerate} disabled={state.isLoading}>
+                    <SparklesIcon size={16} /> Gerar com IA
                   </button>
                 )}
               </div>
@@ -320,13 +328,15 @@ export const WeekDetailModal: React.FC<WeekDetailModalProps> = ({ weekId, onClos
           {!gc && !state.isLoading && (week.type === 'broadcast' || week.type === 'meeting_prep') && (
             <div className="card animate-up" style={{ marginBottom: '20px', border: '1px dashed var(--c-border)' }}>
               <div className="generate-cta" style={{ background: 'var(--c-surface)', borderRadius: 'var(--r-md)' }}>
-                <div className="generate-cta-icon" style={{ color: 'var(--c-primary)' }}>🤖</div>
+                <div className="generate-cta-icon" style={{ color: 'var(--c-primary)', display: 'flex', justifyContent: 'center' }}>
+                  <RobotIcon size={38} />
+                </div>
                 <h3 className="generate-cta-title">Gerar Auxiliares de Estudo</h3>
                 <p className="generate-cta-desc">
                   Deseja usar a inteligência artificial para estruturar perguntas, dinâmica e pontos para destacar do/da {WEEK_TYPE_LABELS[week.type]}?
                 </p>
-                <button className="btn btn-primary" onClick={handleGenerate}>
-                  ✨ Gerar com IA
+                <button className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }} onClick={handleGenerate}>
+                  <SparklesIcon size={16} /> Gerar com IA
                 </button>
               </div>
             </div>

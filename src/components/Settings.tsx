@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import type { AppSettings } from '../types';
+import { SettingsIcon, RobotIcon, CloudIcon, SaveIcon, InfoIcon } from './Icons';
 
 const BackBtn: React.FC<{ onClick: () => void }> = ({ onClick }) => (
   <button className="back-btn" onClick={onClick} aria-label="Voltar">
@@ -47,7 +48,10 @@ export const Settings: React.FC = () => {
     <div className="page">
       <BackBtn onClick={() => navigate('dashboard')} />
 
-      <h2 className="animate-up" style={{ marginBottom: '24px' }}>⚙️ Configurações</h2>
+      <h2 className="animate-up" style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <SettingsIcon size={24} style={{ color: 'var(--c-primary)' }} />
+        Configurações
+      </h2>
 
       {/* User Card */}
       <div className="card animate-up delay-1" style={{ marginBottom: '24px' }}>
@@ -73,7 +77,10 @@ export const Settings: React.FC = () => {
 
       {/* Gemini API */}
       <div className="settings-section animate-up delay-2">
-        <div className="settings-section-title">🤖 Gemini AI</div>
+        <div className="settings-section-title" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <RobotIcon size={18} style={{ color: 'var(--c-primary)' }} />
+          Gemini AI
+        </div>
         <div className="settings-item">
           <div className="settings-item-label">Chave da API do Gemini</div>
           <div className="settings-item-desc">
@@ -107,7 +114,10 @@ export const Settings: React.FC = () => {
 
       {/* Supabase */}
       <div className="settings-section animate-up delay-3">
-        <div className="settings-section-title">☁️ Supabase (Sincronização em Nuvem)</div>
+        <div className="settings-section-title" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <CloudIcon size={18} style={{ color: 'var(--c-primary)' }} />
+          Supabase (Sincronização em Nuvem)
+        </div>
         <div className="settings-item">
           <div className="settings-item-desc">
             Opcional. Configure o Supabase para sincronizar dados entre todos os dispositivos da família.
@@ -148,7 +158,10 @@ export const Settings: React.FC = () => {
 
       {/* Backup */}
       <div className="settings-section animate-up delay-4">
-        <div className="settings-section-title">💾 Backup de Dados</div>
+        <div className="settings-section-title" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <SaveIcon size={18} style={{ color: 'var(--c-primary)' }} />
+          Backup de Dados
+        </div>
         <div className="settings-item">
           <div className="settings-item-label">Exportar backup</div>
           <div className="settings-item-desc">Salva todos os dados em um arquivo JSON.</div>
@@ -179,7 +192,10 @@ export const Settings: React.FC = () => {
 
       {/* About */}
       <div className="settings-section animate-up delay-4">
-        <div className="settings-section-title">ℹ️ Sobre</div>
+        <div className="settings-section-title" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <InfoIcon size={18} style={{ color: 'var(--c-primary)' }} />
+          Sobre
+        </div>
         <div className="settings-item">
           <div className="settings-item-label">Adoração em Família — Floro</div>
           <div className="settings-item-desc" style={{ lineHeight: 1.7 }}>

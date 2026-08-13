@@ -2,7 +2,7 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
 import { WeekCard } from './WeekCard';
 import { WeekDetailModal } from './WeekDetail';
-import { SunIcon, MoonIcon, PlusIcon, SettingsIcon } from './Icons';
+import { PlusIcon, BulbIcon, PencilIcon, GameIcon, SparklesIcon } from './Icons';
 
 const MONTH_NAMES = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
@@ -10,7 +10,7 @@ const MONTH_NAMES = [
 ];
 
 export const Dashboard: React.FC = () => {
-  const { state, navigate, initializeMonthWeeks, addThemeToQueue, saveAppSettings } = useApp();
+  const { state, initializeMonthWeeks, addThemeToQueue } = useApp();
   const { weeks } = state;
 
   const today = useMemo(() => new Date(), []);
@@ -81,72 +81,9 @@ export const Dashboard: React.FC = () => {
       .sort((a, b) => a.date.localeCompare(b.date));
   }, [weeks, displayedMonthStr]);
 
-  // Toggle Dark/Light Theme
-  const handleToggleTheme = () => {
-    const nextTheme = state.settings.theme === 'dark' ? 'light' : 'dark';
-    saveAppSettings({ ...state.settings, theme: nextTheme });
-  };
-
   return (
-    <div className="page" style={{ paddingBottom: '100px', background: 'var(--c-bg)', minHeight: '100vh' }}>
+    <div className="page" style={{ paddingBottom: '100px' }}>
       
-      {/* JW Style Top Header Bar */}
-      <div style={{
-        background: 'var(--c-primary-dark)',
-        color: '#ffffff',
-        padding: '12px 16px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        position: 'sticky',
-        top: 0,
-        zIndex: 50,
-        boxShadow: 'var(--shadow-sm)',
-        margin: '-20px -16px 20px -16px', // pull negative margin on containers
-      }}>
-        {/* Left Square Logo & Title */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{
-            background: 'var(--c-primary)',
-            color: '#ffffff',
-            fontWeight: 800,
-            fontSize: '0.95rem',
-            width: '28px',
-            height: '28px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            borderRadius: 'var(--r-xs)',
-          }}>
-            AF
-          </div>
-          <div>
-            <span style={{ fontWeight: 800, fontSize: '0.85rem', letterSpacing: '0.03em' }}>ADORAÇÃO EM FAMÍLIA</span>
-            <span style={{ fontSize: '0.72rem', display: 'block', opacity: 0.8, marginTop: '-2px' }}>Família Floro</span>
-          </div>
-        </div>
-
-        {/* Right Actions */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          {/* Theme Selector Toggle */}
-          <button
-            onClick={handleToggleTheme}
-            style={{ background: 'none', border: 'none', color: '#ffffff', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-            title="Alternar Tema"
-          >
-            {state.settings.theme === 'dark' ? <SunIcon size={20} /> : <MoonIcon size={20} />}
-          </button>
-          
-          <button
-            onClick={() => navigate('settings')}
-            style={{ background: 'none', border: 'none', color: '#ffffff', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
-            title="Configurações"
-          >
-            <SettingsIcon size={20} />
-          </button>
-        </div>
-      </div>
-
       {/* JW Style Secondary Sub Bar */}
       <div style={{
         background: 'var(--c-surface-2)',
@@ -231,7 +168,10 @@ export const Dashboard: React.FC = () => {
               <form onSubmit={handleQuickAddSubmit} className="form-grid">
                 
                 <div className="input-group">
-                  <label className="input-label" htmlFor="popup-theme">💡 Tema Bíblico</label>
+                  <label className="input-label" htmlFor="popup-theme" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <BulbIcon size={16} style={{ color: 'var(--c-primary)' }} />
+                    Tema Bíblico
+                  </label>
                   <input
                     id="popup-theme"
                     className="input"
@@ -246,7 +186,10 @@ export const Dashboard: React.FC = () => {
                 </div>
 
                 <div className="input-group">
-                  <label className="input-label" htmlFor="popup-desc">📝 Contexto / Detalhes <span className="text-muted">(opcional)</span></label>
+                  <label className="input-label" htmlFor="popup-desc" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <PencilIcon size={16} style={{ color: 'var(--c-primary)' }} />
+                    Contexto / Detalhes <span className="text-muted">(opcional)</span>
+                  </label>
                   <textarea
                     id="popup-desc"
                     className="input textarea"
@@ -259,7 +202,10 @@ export const Dashboard: React.FC = () => {
                 </div>
 
                 <div className="input-group">
-                  <label className="input-label" htmlFor="popup-dynamic">🎮 Dinâmica Planejada <span className="text-muted">(opcional)</span></label>
+                  <label className="input-label" htmlFor="popup-dynamic" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <GameIcon size={16} style={{ color: 'var(--c-primary)' }} />
+                    Dinâmica Planejada <span className="text-muted">(opcional)</span>
+                  </label>
                   <textarea
                     id="popup-dynamic"
                     className="input textarea"
@@ -281,13 +227,13 @@ export const Dashboard: React.FC = () => {
                 <button
                   type="submit"
                   className="btn btn-primary btn-block"
-                  style={{ background: 'var(--c-accent)', border: 'none', color: '#ffffff', fontWeight: 'bold' }}
+                  style={{ background: 'var(--c-accent)', border: 'none', color: '#ffffff', fontWeight: 'bold', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
                   disabled={isAdding || !themeInput.trim()}
                 >
                   {isAdding ? (
                     <><div className="spinner" style={{ borderTopColor: '#fff' }} /> Agendando...</>
                   ) : (
-                    <>✨ Enviar para Fila</>
+                    <><SparklesIcon size={16} /> Enviar para Fila</>
                   )}
                 </button>
 

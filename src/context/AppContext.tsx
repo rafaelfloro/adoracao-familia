@@ -106,6 +106,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const localWeeks = loadWeeks();
     dispatch({ type: 'SET_WEEKS', payload: localWeeks });
 
+    const savedUserId = localStorage.getItem('saved_user_id');
+    if (savedUserId) {
+      const user = USERS.find((u) => u.id === savedUserId);
+      if (user) {
+        dispatch({ type: 'LOGIN', payload: user });
+      }
+    }
+
     const syncWithSupabase = async () => {
       const supabase = getSupabaseClient(settings.supabaseUrl, settings.supabaseAnonKey);
       if (!supabase) return;
@@ -145,7 +153,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return true;
   };
 
-  const logout = () => dispatch({ type: 'LOGOUT' });
+  const logout = () => {
+    localStorage.removeItem('saved_user_id');
+    dispatch({ type: 'LOGOUT' });
+  };
 
   const navigate = (page: Page, weekId?: string) => {
     dispatch({ type: 'NAVIGATE', payload: { page, weekId } });

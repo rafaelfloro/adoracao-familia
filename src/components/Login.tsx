@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { USERS } from '../types';
+import { BookIcon } from './Icons';
 
 const EyeIcon = ({ open }: { open: boolean }) => (
   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -24,6 +25,7 @@ export const Login: React.FC = () => {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [password, setPassword] = useState('');
   const [showPwd, setShowPwd] = useState(false);
+  const [keepConnected, setKeepConnected] = useState(true);
   const [error, setError] = useState('');
   const [isLogging, setIsLogging] = useState(false);
 
@@ -42,7 +44,13 @@ export const Login: React.FC = () => {
     setIsLogging(true);
     await new Promise((r) => setTimeout(r, 400)); // smooth delay
     const ok = login(selectedId, password);
-    if (!ok) {
+    if (ok) {
+      if (keepConnected) {
+        localStorage.setItem('saved_user_id', selectedId);
+      } else {
+        localStorage.removeItem('saved_user_id');
+      }
+    } else {
       setError('Senha incorreta. Tente novamente.');
       setIsLogging(false);
     }
@@ -52,7 +60,9 @@ export const Login: React.FC = () => {
     <div className="login-page">
       {/* Logo */}
       <div className="login-logo animate-up">
-        <div className="login-logo-icon">🏡</div>
+        <div className="login-logo-icon" style={{ display: 'flex', justifyContent: 'center', color: 'var(--c-primary)', marginBottom: '10px' }}>
+          <BookIcon size={38} />
+        </div>
         <h1 className="login-title">Adoração em Família</h1>
         <p className="login-subtitle">Família Floro · Bem-vindo(a)!</p>
       </div>
@@ -98,7 +108,7 @@ export const Login: React.FC = () => {
             </div>
 
             {/* Password */}
-            <div className="input-group" style={{ marginBottom: '20px' }}>
+            <div className="input-group" style={{ marginBottom: '14px' }}>
               <label className="input-label" htmlFor="password">Senha</label>
               <div style={{ position: 'relative' }}>
                 <input
@@ -124,6 +134,8 @@ export const Login: React.FC = () => {
                     display: 'flex',
                     alignItems: 'center',
                     transition: 'color var(--t-fast)',
+                    background: 'none',
+                    border: 'none',
                   }}
                   onMouseEnter={(e) => (e.currentTarget.style.color = 'var(--c-primary)')}
                   onMouseLeave={(e) => (e.currentTarget.style.color = 'var(--c-text-3)')}
@@ -131,6 +143,20 @@ export const Login: React.FC = () => {
                   <EyeIcon open={showPwd} />
                 </button>
               </div>
+            </div>
+
+            {/* Keep Connected Checkbox */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px' }}>
+              <input
+                type="checkbox"
+                id="keepConnected"
+                checked={keepConnected}
+                onChange={(e) => setKeepConnected(e.target.checked)}
+                style={{ width: '16px', height: '16px', cursor: 'pointer', margin: 0 }}
+              />
+              <label htmlFor="keepConnected" style={{ fontSize: '0.82rem', color: 'var(--c-text-2)', cursor: 'pointer', userSelect: 'none', fontWeight: 600 }}>
+                Continuar conectado
+              </label>
             </div>
 
             {/* Error */}

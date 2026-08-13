@@ -59,7 +59,7 @@ export const WeekCard: React.FC<WeekCardProps> = ({ week, index, onClick }) => {
       {/* Icon Area */}
       <div style={{
         width: '46px', height: '46px', borderRadius: 'var(--r-sm)',
-        background: isFree ? 'transparent' : 'var(--c-bg)',
+        background: isFree ? 'transparent' : 'var(--c-primary-light)',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
         flexShrink: 0,
       }}>
@@ -82,7 +82,17 @@ export const WeekCard: React.FC<WeekCardProps> = ({ week, index, onClick }) => {
         {/* Meta badges */}
         {!isFree && (
           <div style={{ display: 'flex', gap: '6px', marginTop: '6px', alignItems: 'center' }}>
-            {responsible && (
+            {(week.type === 'meeting_prep' || week.type === 'broadcast') ? (
+              <span className="badge" style={{
+                background: 'var(--c-primary-20)',
+                color: 'var(--c-primary)',
+                fontSize: '0.7rem',
+                fontWeight: 700,
+                borderRadius: 'var(--r-xs)',
+              }}>
+                Família
+              </span>
+            ) : responsible && (
               <span className="badge" style={{
                 background: `${responsible.color}15`,
                 color: responsible.color,
