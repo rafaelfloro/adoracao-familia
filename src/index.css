@@ -17,6 +17,7 @@
 
   --c-bg:            #f4f4f4; /* Gray outer background */
   --c-surface:       #ffffff; /* Main paper sheet background */
+  --c-surface-glass: rgba(255, 255, 255, 0.65);
   --c-surface-2:     #f0f0f0; /* Table/List gray headers */
   --c-border:        #dcdcdc; /* Light border */
   --c-border-light:  #eaeaea;
@@ -71,6 +72,7 @@
 
   --c-bg:            #121212; /* Dark outer background */
   --c-surface:       #1e1e1e; /* Main sheet background */
+  --c-surface-glass: rgba(30, 30, 30, 0.65);
   --c-surface-2:     #252525; /* Headers and list containers */
   --c-border:        #333333;
   --c-border-light:  #2a2a2a;
@@ -1083,29 +1085,36 @@ h3 { font-size: 1.05rem; font-weight: 600; }
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(42, 53, 71, 0.4);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(15, 23, 42, 0.3) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
   display: flex;
   align-items: center;
   justify-content: center;
-  z-index: 1000;
+  z-index: 2000;
   padding: 16px;
   animation: fadeIn var(--t-fast) both;
 }
 
 .modal-container {
-  background: var(--c-surface);
+  background: rgba(255, 255, 255, 0.8) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
   border-radius: var(--r-lg);
   width: 100%;
   max-width: 600px;
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: var(--shadow-xl);
-  border: 1px solid var(--c-border);
+  border: 1px solid rgba(255, 255, 255, 0.4) !important;
   animation: scaleIn var(--t-med) both;
   display: flex;
   flex-direction: column;
+}
+
+[data-theme="dark"] .modal-container {
+  background: rgba(30, 30, 30, 0.8) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
 }
 
 .modal-header {
@@ -1116,7 +1125,9 @@ h3 { font-size: 1.05rem; font-weight: 600; }
   justify-content: space-between;
   position: sticky;
   top: 0;
-  background: var(--c-surface);
+  background: transparent !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   z-index: 10;
 }
 

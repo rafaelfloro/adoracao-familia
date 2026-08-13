@@ -139,7 +139,7 @@ export const WeekDetailModal: React.FC<WeekDetailModalProps> = ({ weekId, onClos
           <button className="modal-close-btn" onClick={onClose}>&times;</button>
         </div>
 
-        <div className="modal-body" style={{ background: 'var(--c-bg)', padding: '16px' }}>
+        <div className="modal-body" style={{ background: 'transparent', padding: '16px' }}>
           
           {/* Watchtower Style Ochre Header bar */}
           <div style={{
@@ -157,7 +157,7 @@ export const WeekDetailModal: React.FC<WeekDetailModalProps> = ({ weekId, onClos
 
           {/* Watchtower Study Sheet */}
           <div style={{
-            background: 'var(--c-surface)',
+            background: 'var(--c-surface-glass)',
             padding: '20px',
             border: '1px solid var(--c-border)',
             borderRadius: '0 0 var(--r-md) var(--r-md)',
