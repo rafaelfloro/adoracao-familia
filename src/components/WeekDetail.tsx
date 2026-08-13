@@ -319,7 +319,11 @@ export const WeekDetailModal: React.FC<WeekDetailModalProps> = ({ weekId, onClos
                   </button>
                 ) : (
                   <button className="btn btn-primary" style={{ background: 'var(--c-accent)', color: 'white', border: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }} onClick={handleGenerate} disabled={state.isLoading}>
-                    <SparklesIcon size={16} /> Gerar com IA
+                    {state.isLoading ? (
+                      <><div className="spinner" style={{ borderTopColor: '#fff', width: '16px', height: '16px' }} /> Gerando roteiro com IA...</>
+                    ) : (
+                      <><SparklesIcon size={16} /> Gerar com IA</>
+                    )}
                   </button>
                 )}
               </div>
@@ -336,8 +340,12 @@ export const WeekDetailModal: React.FC<WeekDetailModalProps> = ({ weekId, onClos
                 <p className="generate-cta-desc">
                   Deseja usar a inteligência artificial para estruturar perguntas, dinâmica e pontos para destacar do/da {WEEK_TYPE_LABELS[week.type]}?
                 </p>
-                <button className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }} onClick={handleGenerate}>
-                  <SparklesIcon size={16} /> Gerar com IA
+                <button className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }} onClick={handleGenerate} disabled={state.isLoading}>
+                  {state.isLoading ? (
+                    <><div className="spinner" style={{ borderTopColor: '#fff', width: '16px', height: '16px' }} /> Gerando roteiro com IA...</>
+                  ) : (
+                    <><SparklesIcon size={16} /> Gerar com IA</>
+                  )}
                 </button>
               </div>
             </div>
@@ -481,9 +489,13 @@ export const WeekDetailModal: React.FC<WeekDetailModalProps> = ({ weekId, onClos
                 className="btn btn-sm btn-ghost"
                 onClick={handleGenerate}
                 disabled={state.isLoading}
-                style={{ alignSelf: 'center', marginTop: '12px' }}
+                style={{ alignSelf: 'center', marginTop: '12px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
               >
-                🔄 Regerar Roteiro com Gemini IA
+                {state.isLoading ? (
+                  <><div className="spinner" style={{ width: '14px', height: '14px' }} /> Regerando...</>
+                ) : (
+                  <>🔄 Regerar Roteiro com Gemini IA</>
+                )}
               </button>
 
             </div>
