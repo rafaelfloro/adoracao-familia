@@ -73,6 +73,7 @@ export interface AppSettings {
   supabaseAnonKey: string;
   useSupabase: boolean;
   theme: 'light' | 'dark';
+  geminiModel: string;
 }
 
 export const USERS: User[] = [

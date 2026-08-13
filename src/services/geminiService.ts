@@ -97,14 +97,10 @@ ${dynamicSection}
 Crie um roteiro completo e dinâmico para esta adoração em família.
 
 PASSO OBRIGATÓRIO — PESQUISA COM GOOGLE SEARCH:
-Antes de criar o roteiro, use o Google Search para encontrar RECURSOS COMPLEMENTARES REAIS sobre o tema "${searchTopic}":
-- Pesquise: site:jw.org "${searchTopic}"
-- Pesquise: site:jw.org videos "${searchTopic}"  
-- Pesquise: site:tv.jw.org "${searchTopic}"
-- Pesquise: site:wol.jw.org "${searchTopic}"
+Antes de criar o roteiro, use a ferramenta de busca uma única vez para encontrar RECURSOS COMPLEMENTARES REAIS no site oficial:
+- Pesquise apenas por: site:jw.org "${searchTopic}"
 
-Estes recursos serão usados como LINKS COMPLEMENTARES para enriquecer a adoração em família —
-artigos para ler antes, vídeos para assistir juntos, estudos para aprofundar o tema.
+Estes recursos serão usados como LINKS COMPLEMENTARES para enriquecer a adoração em família — artigos ou vídeos relacionados.
 NÃO são fontes para copiar texto — são sugestões de material que a família pode explorar.
 
 ━━━ FORMATO DA RESPOSTA ━━━
@@ -112,7 +108,7 @@ NÃO são fontes para copiar texto — são sugestões de material que a famíli
 Retorne APENAS um JSON válido, sem texto antes ou depois, com esta estrutura:
 
 {
-  "objective": "Introdução calorosa de 3-4 parágrafos sobre o tema. Use emojis. Explique por que este tema é relevante para a vida cristã hoje. Tom próximo e motivador, como se fosse uma conversa.",
+  "objective": "Introdução calorosa de 2-3 parágrafos sobre o tema. Use emojis. Explique por que este tema é relevante para a vida cristã hoje.",
   
   "bibleVerses": [
     { 
@@ -128,31 +124,30 @@ Retorne APENAS um JSON válido, sem texto antes ou depois, com esta estrutura:
     }
   ],
   
-  "dynamic": "Descrição DETALHADA da dinâmica. Inclua: nome da dinâmica, objetivo, materiais necessários (se houver), passo a passo numerado, tempo estimado, e como adaptar para três adultos.",
+  "dynamic": "Descrição da dinâmica. Inclua: nome da dinâmica, materiais necessários (se houver), passo a passo resumido, e como fazer com três adultos.",
   
-  "closingThought": "Pensamento final encorajador de 2 parágrafos. Conecte o tema com a caminhada espiritual da família. Termine com sugestão de oração temática.",
+  "closingThought": "Pensamento final encorajador de 1-2 parágrafos. Termine com sugestão de oração temática.",
   
   "jwLinks": [
     {
       "title": "Título exato do artigo, vídeo ou recurso encontrado",
       "url": "URL real e completa encontrada via Google Search",
       "type": "artigo | video | estudo | programa",
-      "description": "Por que este recurso complementa bem esta adoração? O que a família vai encontrar nele? (1-2 frases)"
+      "description": "Por que este recurso complementa bem esta adoração? (1 frase)"
     }
   ]
 }
 
 REGRAS OBRIGATÓRIAS:
-- bibleVerses: EXATAMENTE 4 a 6 versículos, todos relevantes ao tema central
-- discussionQuestions: EXATAMENTE 5 a 7 perguntas — variando de reflexivas a práticas
-- jwLinks: EXATAMENTE 4 a 7 links — todos REAIS, encontrados via Google Search no jw.org/tv.jw.org/wol.jw.org
-  ✅ Inclua mix de: artigos para leitura, vídeos para assistir juntos, estudos para aprofundar
+- bibleVerses: 3 a 5 versículos relevantes ao tema central
+- discussionQuestions: 3 a 5 perguntas reflexivas ou práticas
+- jwLinks: 2 a 4 links REAIS, encontrados via Google Search no jw.org
   ✅ URLs devem ser completas e reais — não invente links
   ❌ Não cite artigos que não foram encontrados na pesquisa
 - Todo o conteúdo em Português do Brasil
-- NÃO use markdown dentro das strings do JSON — apenas texto e quebras de linha (\\n)
-- O campo "dynamic" deve ter NO MÍNIMO 150 palavras de detalhamento
-- O campo "objective" deve ter NO MÍNIMO 200 palavras, caloroso e envolvente
+- NÃO use markdown dentro das strings do JSON — apenas texto e quebras de linha (\n)
+- O campo "dynamic" deve ser conciso e prático
+- O campo "objective" deve ser caloroso e objetivo
 `;
 };
 
@@ -160,7 +155,8 @@ REGRAS OBRIGATÓRIAS:
 
 export const generateFamilyWorshipContent = async (
   apiKey: string,
-  week: Partial<Week>
+  week: Partial<Week>,
+  modelName?: string
 ): Promise<GeneratedContent> => {
   if (!apiKey) {
     throw new Error(
@@ -171,7 +167,7 @@ export const generateFamilyWorshipContent = async (
   const ai = new GoogleGenAI({ apiKey });
 
   const response = await ai.models.generateContent({
-    model: 'gemini-3.5-flash',
+    model: modelName || 'gemini-3.5-flash',
     contents: FAMILY_WORSHIP_KNOWLEDGE + '\n\n' + buildPrompt(week),
     config: {
       tools: [{ googleSearch: {} }],

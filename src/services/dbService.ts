@@ -9,6 +9,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
   useSupabase: false,
   theme: 'light',
+  geminiModel: 'gemini-3.5-flash',
 };
 
 // ─── Local Storage ─────────────────────────────────────────────────────────

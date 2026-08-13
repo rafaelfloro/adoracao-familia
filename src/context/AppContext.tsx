@@ -210,7 +210,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     dispatch({ type: 'SET_ERROR', payload: null });
 
     try {
-      const content = await generateFamilyWorshipContent(state.settings.geminiApiKey, week);
+      const content = await generateFamilyWorshipContent(state.settings.geminiApiKey, week, state.settings.geminiModel);
       const updatedWeek: Week = {
         ...week,
         generatedContent: content,

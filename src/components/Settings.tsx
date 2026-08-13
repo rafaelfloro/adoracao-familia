@@ -103,12 +103,32 @@ export const Settings: React.FC = () => {
               onClick={() => setShowKey((s) => !s)}
               style={{
                 position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)',
-                color: 'var(--c-text-3)', fontSize: '0.85rem',
+                color: 'var(--c-primary)', fontSize: '0.78rem', fontWeight: 700,
+                background: 'none', border: 'none', cursor: 'pointer',
               }}
             >
-              {showKey ? '🙈' : '👁'}
+              {showKey ? 'Ocultar' : 'Mostrar'}
             </button>
           </div>
+        </div>
+
+        <div className="settings-item" style={{ marginTop: '16px' }}>
+          <div className="settings-item-label">Modelo do Gemini</div>
+          <div className="settings-item-desc">
+            Selecione qual versão do modelo da IA usar para gerar os roteiros de adoração.
+          </div>
+          <select
+            className="input"
+            value={settings.geminiModel || 'gemini-3.5-flash'}
+            onChange={(e) => update('geminiModel', e.target.value)}
+            style={{ width: '100%', height: '42px', fontSize: '0.85rem' }}
+          >
+            <option value="gemini-3.6-flash">Gemini 3.6 Flash (Recomendado)</option>
+            <option value="gemini-3.5-flash">Gemini 3.5 Flash</option>
+            <option value="gemini-3.5-flash-lite">Gemini 3.5 Flash Lite</option>
+            <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+            <option value="gemini-2.5-flash-lite">Gemini 2.5 Flash Lite</option>
+          </select>
         </div>
       </div>
 
