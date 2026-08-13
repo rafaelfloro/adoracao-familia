@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useApp } from '../context/AppContext';
 import type { BibleVerse, DiscussionQuestion, GeneratedContent, JwLink } from '../types';
@@ -25,19 +25,101 @@ const ContentSection: React.FC<{ icon: React.ReactNode; title: string; children:
   </div>
 );
 
-const AiLoading: React.FC = () => (
-  <div className="ai-loading animate-fade">
-    <div className="ai-loading-dots">
-      <div className="ai-dot" />
-      <div className="ai-dot" />
-      <div className="ai-dot" />
+const AiLoading: React.FC = () => {
+  const [activeStep, setActiveStep] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setActiveStep((prev) => (prev < 3 ? prev + 1 : prev));
+    }, 1800);
+    return () => clearInterval(interval);
+  }, []);
+
+  const steps = [
+    { title: '🔍 Buscando recursos no jw.org...', desc: 'Consultando o site oficial via proxy CORS DuckDuckGo' },
+    { title: '🤖 Enviando contexto para a IA...', desc: 'Passando o tema e os links oficiais para o Gemini' },
+    { title: '✨ Estruturando dinâmicas e perguntas...', desc: 'Organizando atividades práticas e reflexões' },
+    { title: '💾 Gravando roteiro de estudo no Supabase...', desc: 'Sincronizando as alterações com o banco de dados em nuvem' }
+  ];
+
+  return (
+    <div className="ai-loading animate-fade" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+        <div className="spinner" style={{ width: '20px', height: '20px', borderTopColor: 'var(--c-accent)' }} />
+        <h4 style={{ margin: 0, fontWeight: 700, fontSize: '1rem', color: 'var(--c-text)' }}>Geração em Progresso...</h4>
+      </div>
+      
+      <div className="loading-timeline" style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+        {steps.map((step, idx) => {
+          const isActive = idx === activeStep;
+          const isCompleted = idx < activeStep;
+          
+          return (
+            <div key={idx} className={`timeline-step ${isActive ? 'active' : ''} ${isCompleted ? 'completed' : ''}`} style={{
+              display: 'flex',
+              gap: '14px',
+              alignItems: 'flex-start',
+              position: 'relative',
+              opacity: isCompleted ? 0.7 : isActive ? 1 : 0.4
+            }}>
+              {/* Connecting line */}
+              {idx < steps.length - 1 && (
+                <div style={{
+                  position: 'absolute',
+                  left: '11px',
+                  top: '24px',
+                  bottom: '-16px',
+                  width: '2px',
+                  background: isCompleted ? 'var(--c-primary)' : 'var(--c-border)',
+                  zIndex: 1
+                }} />
+              )}
+              
+              {/* Step circle */}
+              <div className="step-indicator" style={{
+                width: '24px',
+                height: '24px',
+                borderRadius: '50%',
+                border: '2px solid',
+                borderColor: isCompleted || isActive ? 'var(--c-primary)' : 'var(--c-border)',
+                background: isCompleted ? 'var(--c-primary)' : 'var(--c-surface)',
+                color: isCompleted ? 'white' : isActive ? 'var(--c-primary)' : 'var(--c-text-3)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '0.75rem',
+                fontWeight: 'bold',
+                zIndex: 2,
+                flexShrink: 0,
+                boxShadow: isActive ? '0 0 6px var(--c-primary-20)' : 'none'
+              }}>
+                {isCompleted ? '✓' : idx + 1}
+              </div>
+              
+              <div className="step-content">
+                <div className="step-title" style={{
+                  fontWeight: 700,
+                  fontSize: '0.85rem',
+                  color: isActive ? 'var(--c-text)' : 'var(--c-text-2)',
+                  textDecoration: isCompleted ? 'line-through' : 'none'
+                }}>
+                  {step.title}
+                </div>
+                <div className="step-desc" style={{
+                  fontSize: '0.74rem',
+                  color: 'var(--c-text-3)',
+                  marginTop: '2px'
+                }}>
+                  {step.desc}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
     </div>
-    <div>
-      <p className="font-semibold" style={{ marginBottom: '6px' }}>Gerando roteiro com Gemini AI...</p>
-      <p className="text-sm text-muted">Pesquisando artigos no jw.org e elaborando o conteúdo</p>
-    </div>
-  </div>
-);
+  );
+};
 
 export const WeekDetailModal: React.FC<WeekDetailModalProps> = ({ weekId, onClose }) => {
   const { state, generateContent, upsertWeek, swapWeeks } = useApp();
