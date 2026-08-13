@@ -1,21 +1,23 @@
 import React, { useMemo, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import type { BibleVerse, DiscussionQuestion, GeneratedContent, JwLink } from '../types';
-import { WEEK_TYPE_ICONS, WEEK_TYPE_LABELS, USERS } from '../types';
+import { WEEK_TYPE_LABELS, USERS } from '../types';
+import { getWeekRangeString } from '../utils/dateUtils';
+import { BookIcon, TvIcon, DocIcon, SparklesIcon, EditIcon } from './Icons';
 
 interface WeekDetailModalProps {
   weekId: string;
   onClose: () => void;
 }
 
-const ContentSection: React.FC<{ icon: string; title: string; children: React.ReactNode; delay?: number }> = ({
+const ContentSection: React.FC<{ icon: React.ReactNode; title: string; children: React.ReactNode; delay?: number }> = ({
   icon, title, children, delay = 1,
 }) => (
-  <div className={`card content-section animate-up delay-${delay}`} style={{ marginBottom: '16px' }}>
-    <div className="card-body" style={{ padding: '16px' }}>
-      <div className="content-section-header" style={{ marginBottom: '10px', paddingBottom: '8px' }}>
-        <span className="content-section-icon">{icon}</span>
-        <span className="content-section-title">{title}</span>
+  <div className={`card content-section animate-up delay-${delay}`} style={{ marginBottom: '16px', border: '1px solid var(--c-border)', borderRadius: 'var(--r-md)' }}>
+    <div className="card-body" style={{ padding: '18px' }}>
+      <div className="content-section-header" style={{ marginBottom: '14px', paddingBottom: '8px', borderBottom: '1px solid var(--c-border-light)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <span style={{ display: 'flex', alignItems: 'center', color: 'var(--c-primary)' }}>{icon}</span>
+        <span className="content-section-title" style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--c-primary)' }}>{title}</span>
       </div>
       {children}
     </div>
@@ -54,7 +56,7 @@ export const WeekDetailModal: React.FC<WeekDetailModalProps> = ({ weekId, onClos
   };
 
   const handleDelete = () => {
-    if (window.confirm('Deseja mesmo redefinir esta semana para livre?')) {
+    if (window.confirm('Deseja mesmo redefinir esta semana para livre? Isso apagará o roteiro da IA.')) {
       upsertWeek({
         ...week,
         type: 'free',
@@ -83,7 +85,6 @@ export const WeekDetailModal: React.FC<WeekDetailModalProps> = ({ weekId, onClos
       };
       upsertWeek(updated);
       setEditingTheme(false);
-      // Auto regenerate if edited
       generateContent(week.id).catch(console.error);
     }
   };
@@ -101,9 +102,32 @@ export const WeekDetailModal: React.FC<WeekDetailModalProps> = ({ weekId, onClos
     setShowSwapSelector(false);
   };
 
-  const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr + 'T12:00:00');
-    return d.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  // Format watchtower style superscript paragraph numbers
+  const renderNumberedParagraphs = (text: string) => {
+    if (!text) return null;
+    const paragraphs = text.split('\n').filter((p) => p.trim().length > 0);
+    return paragraphs.map((p, index) => {
+      const cleanText = p.replace(/^\d+[\.\s]*/, ''); // remove default list numbering if AI put it
+      return (
+        <p key={index} className="wt-paragraph" style={{
+          marginBottom: '14px',
+          textIndent: '18px',
+          textAlign: 'justify',
+          fontSize: '0.92rem',
+          lineHeight: '1.7',
+          color: 'var(--c-text)',
+        }}>
+          <sup style={{
+            color: 'var(--c-primary)',
+            marginRight: '6px',
+            fontWeight: 'bold',
+            fontSize: '0.74rem',
+            verticalAlign: 'super',
+          }}>{index + 1}</sup>
+          {cleanText}
+        </p>
+      );
+    });
   };
 
   return (
@@ -111,132 +135,151 @@ export const WeekDetailModal: React.FC<WeekDetailModalProps> = ({ weekId, onClos
       <div className="modal-container" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="modal-header">
-          <div className="modal-title">Detalhes da Adoração</div>
+          <div className="modal-title">Adoração em Família</div>
           <button className="modal-close-btn" onClick={onClose}>&times;</button>
         </div>
 
-        <div className="modal-body">
-          {/* Hero Section */}
-          <div className="detail-header" style={{ marginBottom: '20px' }}>
-            <div className="detail-hero-icon" style={{ width: '54px', height: '54px', fontSize: '1.6rem' }}>
-              {WEEK_TYPE_ICONS[week.type]}
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div className="text-xs text-muted" style={{ marginBottom: '4px' }}>
-                {formatDate(week.date)}
+        <div className="modal-body" style={{ background: 'var(--c-bg)', padding: '16px' }}>
+          
+          {/* Watchtower Style Ochre Header bar */}
+          <div style={{
+            background: 'var(--c-accent)',
+            color: '#ffffff',
+            padding: '8px 16px',
+            fontSize: '0.75rem',
+            fontWeight: 700,
+            letterSpacing: '0.07em',
+            textTransform: 'uppercase',
+            borderRadius: 'var(--r-sm) var(--r-sm) 0 0',
+          }}>
+            {getWeekRangeString(week.date)}
+          </div>
+
+          {/* Watchtower Study Sheet */}
+          <div style={{
+            background: 'var(--c-surface)',
+            padding: '20px',
+            border: '1px solid var(--c-border)',
+            borderRadius: '0 0 var(--r-md) var(--r-md)',
+            boxShadow: 'var(--shadow-sm)',
+            marginBottom: '20px',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '14px', marginBottom: '18px' }}>
+              <div style={{
+                width: '44px', height: '44px', borderRadius: 'var(--r-sm)',
+                background: 'var(--c-primary-light)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: 'var(--c-primary)', flexShrink: 0,
+              }}>
+                {week.type === 'meeting_prep' && <DocIcon size={22} />}
+                {week.type === 'broadcast' && <TvIcon size={22} />}
+                {week.type === 'theme' && <BookIcon size={22} />}
+                {week.type === 'free' && <SparklesIcon size={22} />}
               </div>
-              
-              {editingTheme ? (
-                <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
-                  <input
-                    className="input"
-                    value={themeInput}
-                    onChange={(e) => setThemeInput(e.target.value)}
-                    style={{ height: '38px', fontSize: '0.9rem' }}
-                    placeholder="Digite o novo tema"
-                  />
-                  <button className="btn btn-sm btn-primary" onClick={handleSaveTheme}>Salvar</button>
-                  <button className="btn btn-sm btn-ghost" onClick={() => setEditingTheme(false)}>Cancelar</button>
-                </div>
-              ) : (
-                <h2 style={{ fontSize: '1.25rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  {title}
-                  {week.type === 'theme' && (
-                    <button
-                      onClick={() => { setThemeInput(week.theme || ''); setEditingTheme(true); }}
-                      style={{ fontSize: '0.9rem', cursor: 'pointer', opacity: 0.6 }}
-                      title="Editar tema"
-                    >
-                      ✎
-                    </button>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                {editingTheme ? (
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <input
+                      className="input"
+                      value={themeInput}
+                      onChange={(e) => setThemeInput(e.target.value)}
+                      style={{ height: '36px', fontSize: '0.85rem' }}
+                      placeholder="Tema..."
+                    />
+                    <button className="btn btn-sm btn-primary" onClick={handleSaveTheme}>Salvar</button>
+                    <button className="btn btn-sm btn-ghost" onClick={() => setEditingTheme(false)}>X</button>
+                  </div>
+                ) : (
+                  <h2 style={{ fontSize: '1.2rem', fontWeight: 800, color: 'var(--c-text)', display: 'flex', alignItems: 'center', gap: '8px', lineHeight: 1.3 }}>
+                    {title}
+                    {week.type === 'theme' && (
+                      <button
+                        onClick={() => { setThemeInput(week.theme || ''); setEditingTheme(true); }}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', opacity: 0.6, display: 'inline-flex', color: 'var(--c-primary)' }}
+                        title="Editar tema"
+                      >
+                        <EditIcon size={14} />
+                      </button>
+                    )}
+                  </h2>
+                )}
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '6px' }}>
+                  {week.type !== 'free' && responsible && (
+                    <span className="badge" style={{ background: `${responsible.color}15`, color: responsible.color, fontWeight: 700 }}>
+                      {responsible.name}
+                    </span>
                   )}
-                </h2>
+                  <span className="badge badge-primary" style={{ background: 'var(--c-primary-light)', color: 'var(--c-primary)' }}>
+                    {WEEK_TYPE_LABELS[week.type]}
+                  </span>
+                  {week.completed && <span className="badge badge-success">✓ Realizada</span>}
+                </div>
+              </div>
+            </div>
+
+            {/* Description */}
+            {week.description && (
+              <div style={{ margin: '14px 0', padding: '12px', background: 'var(--c-bg)', borderLeft: '3px solid var(--c-primary)', borderRadius: 'var(--r-xs)' }}>
+                <p className="text-sm text-muted" style={{ lineHeight: 1.5 }}>{week.description}</p>
+              </div>
+            )}
+
+            {/* Complete / Swap / Reset Actions */}
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '16px' }}>
+              <button
+                className={`btn btn-sm ${week.completed ? 'btn-ghost' : 'btn-primary'}`}
+                style={!week.completed ? { background: 'var(--c-primary)', color: 'white' } : undefined}
+                onClick={handleToggleComplete}
+              >
+                {week.completed ? '↩ Reabrir Adoração' : '✓ Concluir Adoração'}
+              </button>
+
+              {otherWeeksInMonth.length > 0 && (
+                <button
+                  className="btn btn-sm btn-secondary"
+                  onClick={() => setShowSwapSelector(!showSwapSelector)}
+                >
+                  🔄 Inverter Data
+                </button>
               )}
 
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '6px' }}>
-                {week.type !== 'free' && responsible && (
-                  <span className="badge" style={{ background: `${responsible.color}15`, color: responsible.color, fontWeight: 700 }}>
-                    {responsible.name}
-                  </span>
-                )}
-                <span className="badge badge-primary">{WEEK_TYPE_LABELS[week.type]}</span>
-                {week.completed && <span className="badge badge-success">✓ Realizada</span>}
+              {week.type === 'theme' && (
+                <button className="btn btn-sm btn-danger" onClick={handleDelete} style={{ background: 'rgba(220,38,38,0.1)', color: 'var(--c-error)', border: 'none' }}>
+                  🗑 Apagar Sugestão
+                </button>
+              )}
+            </div>
+
+            {/* Swap selector */}
+            {showSwapSelector && (
+              <div className="swap-selector-list animate-up">
+                <p className="text-xs text-muted font-semibold" style={{ marginBottom: '8px' }}>Inverter data com outra semana:</p>
+                {otherWeeksInMonth.map((ow) => {
+                  const owTitle = ow.type === 'theme' && ow.theme ? ow.theme : WEEK_TYPE_LABELS[ow.type];
+                  const owResp = USERS.find((u) => u.id === ow.responsibleId);
+                  return (
+                    <button key={ow.id} className="swap-selector-item" onClick={() => handleSwap(ow.id)}>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{getWeekRangeString(ow.date).split(' de ')[0]}</span>
+                      <span style={{ fontSize: '0.82rem', flex: 1, marginLeft: '10px', textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{owTitle}</span>
+                      {ow.type !== 'free' && owResp && (
+                        <span className="badge" style={{ background: `${owResp.color}15`, color: owResp.color, fontSize: '0.62rem' }}>{owResp.name}</span>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
-            </div>
-          </div>
-
-          {/* Description */}
-          {week.description && (
-            <div style={{ marginBottom: '20px', padding: '12px', background: 'var(--c-surface-2)', borderRadius: 'var(--r-sm)' }}>
-              <p className="text-sm text-muted" style={{ lineHeight: 1.6 }}>{week.description}</p>
-            </div>
-          )}
-
-          {/* Actions */}
-          <div className="detail-actions" style={{ marginBottom: '20px' }}>
-            <button
-              className={`btn btn-sm ${week.completed ? 'btn-ghost' : 'btn-secondary'}`}
-              onClick={handleToggleComplete}
-            >
-              {week.completed ? '↩ Reabrir' : '✓ Concluir'}
-            </button>
-
-            {/* Swap Trigger */}
-            {otherWeeksInMonth.length > 0 && (
-              <button
-                className={`btn btn-sm ${showSwapSelector ? 'btn-primary' : 'btn-secondary'} swap-badge-trigger`}
-                onClick={() => setShowSwapSelector(!showSwapSelector)}
-              >
-                🔄 Inverter Semana
-              </button>
-            )}
-
-            {week.type === 'theme' && (
-              <button className="btn btn-sm btn-danger" onClick={handleDelete} title="Redefinir para livre">
-                🗑 Redefinir
-              </button>
             )}
           </div>
 
-          {/* Swap Selector Drawer */}
-          {showSwapSelector && (
-            <div className="swap-selector-list animate-up">
-              <p className="text-xs text-muted font-semibold">Selecione outra semana deste mês para inverter a data:</p>
-              {otherWeeksInMonth.map((ow) => {
-                const owTitle = ow.type === 'theme' && ow.theme ? ow.theme : WEEK_TYPE_LABELS[ow.type];
-                const owResp = USERS.find((u) => u.id === ow.responsibleId);
-                const dayNum = new Date(ow.date + 'T12:00:00').getDate();
-                return (
-                  <button key={ow.id} className="swap-selector-item" onClick={() => handleSwap(ow.id)}>
-                    <div>
-                      <span className="font-semibold" style={{ color: 'var(--c-accent)', marginRight: '8px' }}>
-                        Dia {dayNum}:
-                      </span>
-                      <span style={{ fontSize: '0.85rem' }}>{owTitle}</span>
-                    </div>
-                    {ow.type !== 'free' && owResp && (
-                      <span className="badge" style={{ background: `${owResp.color}15`, color: owResp.color, fontSize: '0.65rem' }}>
-                        {owResp.name}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          )}
-
-          <div className="divider" style={{ margin: '20px 0' }} />
-
-          {/* AI Loading */}
+          {/* AI Loader */}
           {state.isLoading && (
-            <div className="card animate-scale" style={{ marginBottom: '20px' }}>
+            <div className="card animate-scale" style={{ marginBottom: '20px', border: '1px solid var(--c-border)' }}>
               <AiLoading />
             </div>
           )}
 
-          {/* Error */}
+          {/* Error display */}
           {state.error && (
-            <div className="error-banner" style={{ marginBottom: '16px' }}>
+            <div className="error-banner" style={{ marginBottom: '16px', borderRadius: 'var(--r-sm)' }}>
               <span>⚠️</span>
               <div>
                 <div className="font-medium">Erro ao gerar conteúdo</div>
@@ -245,19 +288,19 @@ export const WeekDetailModal: React.FC<WeekDetailModalProps> = ({ weekId, onClos
             </div>
           )}
 
-          {/* Generate CTA — shown only for theme type without content */}
+          {/* AI Generation trigger cards */}
           {!gc && !state.isLoading && (week.type === 'theme' || week.type === 'free') && (
-            <div className="card animate-up" style={{ marginBottom: '20px' }}>
-              <div className="generate-cta">
-                <div className="generate-cta-icon">✨</div>
-                <h3 className="generate-cta-title">Gerar Roteiro com Gemini AI</h3>
+            <div className="card animate-up" style={{ marginBottom: '20px', border: '1px dashed var(--c-border)' }}>
+              <div className="generate-cta" style={{ background: 'var(--c-surface)', borderRadius: 'var(--r-md)' }}>
+                <div className="generate-cta-icon" style={{ color: 'var(--c-accent)' }}>✨</div>
+                <h3 className="generate-cta-title">Gerar Roteiro de Estudo</h3>
                 <p className="generate-cta-desc">
                   {week.type === 'free' ? (
-                    <>Defina um tema primeiro para gerar um estudo bíblico dinâmico.</>
+                    <>Defina um tema de estudo para que a IA possa elaborar perguntas, dinâmicas e pesquisar referências do jw.org.</>
                   ) : (
                     <>
-                      O Gemini vai buscar recursos complementares reais do <strong>jw.org</strong> e criar versículos,
-                      perguntas e dinâmicas interativas sobre o tema <strong>"{week.theme}"</strong>.
+                      O Gemini vai buscar recursos complementares no <strong>jw.org</strong> e criar perguntas e dinâmicas
+                      sobre o tema <strong>"{week.theme}"</strong>.
                     </>
                   )}
                 </p>
@@ -266,75 +309,99 @@ export const WeekDetailModal: React.FC<WeekDetailModalProps> = ({ weekId, onClos
                     + Definir Tema
                   </button>
                 ) : (
-                  <button className="btn btn-primary" onClick={handleGenerate} disabled={state.isLoading}>
-                    ✨ Gerar Roteiro
+                  <button className="btn btn-primary" style={{ background: 'var(--c-accent)', color: 'white', border: 'none' }} onClick={handleGenerate} disabled={state.isLoading}>
+                    ✨ Gerar com IA
                   </button>
                 )}
               </div>
             </div>
           )}
 
-          {/* Render system week generator buttons if empty */}
           {!gc && !state.isLoading && (week.type === 'broadcast' || week.type === 'meeting_prep') && (
-            <div className="card animate-up" style={{ marginBottom: '20px' }}>
-              <div className="generate-cta" style={{ background: 'var(--c-bg)', border: 'none' }}>
-                <div className="generate-cta-icon">{WEEK_TYPE_ICONS[week.type]}</div>
-                <h3 className="generate-cta-title">{WEEK_TYPE_LABELS[week.type]}</h3>
+            <div className="card animate-up" style={{ marginBottom: '20px', border: '1px dashed var(--c-border)' }}>
+              <div className="generate-cta" style={{ background: 'var(--c-surface)', borderRadius: 'var(--r-md)' }}>
+                <div className="generate-cta-icon" style={{ color: 'var(--c-primary)' }}>🤖</div>
+                <h3 className="generate-cta-title">Gerar Auxiliares de Estudo</h3>
                 <p className="generate-cta-desc">
-                  Deseja usar a IA para estruturar perguntas e sugestões dinâmicas para este/esta {WEEK_TYPE_LABELS[week.type]}?
+                  Deseja usar a inteligência artificial para estruturar perguntas, dinâmica e pontos para destacar do/da {WEEK_TYPE_LABELS[week.type]}?
                 </p>
                 <button className="btn btn-primary" onClick={handleGenerate}>
-                  ✨ Gerar Estrutura com IA
+                  ✨ Gerar com IA
                 </button>
               </div>
             </div>
           )}
 
-          {/* Generated Content details */}
+          {/* AI Generated Study Guide */}
           {gc && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {/* Objective */}
-              <ContentSection icon="🎯" title="Objetivo da Adoração" delay={1}>
-                <p className="objective-text" style={{ fontSize: '0.9rem' }}>{gc.objective}</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              
+              {/* Objective (numbered paragraphs Watchtower style) */}
+              <ContentSection icon={<BookIcon size={18} />} title="Objetivo e Consideração">
+                <div className="wt-paragraphs-container">
+                  {renderNumberedParagraphs(gc.objective)}
+                </div>
               </ContentSection>
 
               {/* Bible Verses */}
               {gc.bibleVerses?.length > 0 && (
-                <ContentSection icon="📖" title="Textos Bíblicos" delay={2}>
-                  {gc.bibleVerses.map((v: BibleVerse, i: number) => (
-                    <div key={i} className="bible-verse-item" style={{ padding: '10px 12px' }}>
-                      <div className="bible-verse-ref" style={{ fontSize: '0.8rem' }}>{v.reference}</div>
-                      <div className="bible-verse-text" style={{ fontSize: '0.85rem' }}>{v.text}</div>
-                    </div>
-                  ))}
+                <ContentSection icon={<BookIcon size={18} />} title="Textos Bíblicos Centrais">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {gc.bibleVerses.map((v: BibleVerse, i: number) => (
+                      <div key={i} className="bible-verse-item" style={{
+                        padding: '12px',
+                        background: 'var(--c-primary-light)',
+                        borderLeft: '3px solid var(--c-primary)',
+                        borderRadius: '0 var(--r-sm) var(--r-sm) 0',
+                      }}>
+                        <div className="bible-verse-ref" style={{ fontWeight: 700, fontSize: '0.82rem', color: 'var(--c-primary)', marginBottom: '4px' }}>
+                          {v.reference}
+                        </div>
+                        <div className="bible-verse-text" style={{ fontSize: '0.88rem', fontStyle: 'italic', lineHeight: 1.5, color: 'var(--c-text)' }}>
+                          "{v.text}"
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </ContentSection>
               )}
 
-              {/* Discussion Questions */}
+              {/* Questions */}
               {gc.discussionQuestions?.length > 0 && (
-                <ContentSection icon="💬" title="Perguntas para Discussão" delay={2}>
-                  {gc.discussionQuestions.map((q: DiscussionQuestion, i: number) => (
-                    <div key={i} className="question-item" style={{ padding: '8px 0' }}>
-                      <p className="question-text" style={{ fontSize: '0.88rem' }}>
-                        <span style={{ color: 'var(--c-primary)', fontWeight: 700, marginRight: '6px' }}>{i + 1}.</span>
-                        {q.question}
-                      </p>
-                      {q.hint && <p className="question-hint" style={{ fontSize: '0.78rem' }}>💡 {q.hint}</p>}
-                    </div>
-                  ))}
+                <ContentSection icon={<DocIcon size={18} />} title="Perguntas para Meditação">
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    {gc.discussionQuestions.map((q: DiscussionQuestion, i: number) => (
+                      <div key={i} className="question-item" style={{ padding: '4px 0' }}>
+                        <p className="question-text" style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--c-text)' }}>
+                          <span style={{ color: 'var(--c-primary)', marginRight: '6px', fontWeight: 700 }}>{i + 1}.</span>
+                          {q.question}
+                        </p>
+                        {q.hint && <p className="question-hint" style={{ fontSize: '0.78rem', color: 'var(--c-text-2)', marginLeft: '18px', marginTop: '3px' }}>💡 {q.hint}</p>}
+                      </div>
+                    ))}
+                  </div>
                 </ContentSection>
               )}
 
-              {/* Dynamic */}
+              {/* Dynamic activity */}
               {gc.dynamic && (
-                <ContentSection icon="🎮" title="Dinâmica / Atividade" delay={3}>
-                  <div className="dynamic-box" style={{ padding: '14px', fontSize: '0.85rem' }}>{gc.dynamic}</div>
+                <ContentSection icon={<SparklesIcon size={18} />} title="Atividade Prática / Dinâmica">
+                  <div className="dynamic-box" style={{
+                    padding: '14px',
+                    background: 'var(--c-bg)',
+                    border: '1px solid var(--c-border)',
+                    borderRadius: 'var(--r-sm)',
+                    fontSize: '0.86rem',
+                    lineHeight: 1.6,
+                  }}>
+                    {gc.dynamic}
+                  </div>
                 </ContentSection>
               )}
 
-              {/* JW Links */}
+              {/* Supplementary resources (jw.org) */}
               {gc.jwLinks?.length > 0 && (
-                <ContentSection icon="🔗" title="Recursos Complementares · jw.org" delay={3}>
+                <ContentSection icon={<DocIcon size={18} />} title="Recursos de Pesquisa Complementares">
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     {gc.jwLinks.map((link: JwLink, i: number) => {
                       const rawDesc = link.description || '';
@@ -355,20 +422,19 @@ export const WeekDetailModal: React.FC<WeekDetailModalProps> = ({ weekId, onClos
                             display: 'flex', gap: '8px', padding: '10px',
                             borderRadius: 'var(--r-sm)', border: `1px solid ${color}20`,
                             background: `${color}05`, textDecoration: 'none',
-                            alignItems: 'flex-start',
                           }}
                         >
                           <div style={{ flex: 1, minWidth: 0 }}>
                             <span style={{
-                              display: 'inline-block', fontSize: '0.6rem', fontWeight: 700,
+                              display: 'inline-block', fontSize: '0.58rem', fontWeight: 700,
                               color, background: `${color}15`, padding: '1px 5px',
                               borderRadius: 'var(--r-full)', marginBottom: '3px',
                             }}>{linkType}</span>
-                            <div style={{ fontWeight: 600, fontSize: '0.82rem', color: 'var(--c-text)', lineHeight: 1.2 }}>
+                            <div style={{ fontWeight: 700, fontSize: '0.82rem', color: 'var(--c-text)', lineHeight: 1.2 }}>
                               {link.title}
                             </div>
                             {cleanDesc && (
-                              <div style={{ fontSize: '0.75rem', color: 'var(--c-text-2)', marginTop: '2px', lineHeight: 1.4 }}>
+                              <div style={{ fontSize: '0.74rem', color: 'var(--c-text-2)', marginTop: '2px', lineHeight: 1.4 }}>
                                 {cleanDesc}
                               </div>
                             )}
@@ -381,19 +447,37 @@ export const WeekDetailModal: React.FC<WeekDetailModalProps> = ({ weekId, onClos
                 </ContentSection>
               )}
 
-              {/* Closing Thought */}
+              {/* Encerramento */}
               {gc.closingThought && (
-                <ContentSection icon="🙏" title="Encerramento" delay={4}>
-                  <div className="closing-box" style={{ padding: '14px', fontSize: '0.85rem' }}>{gc.closingThought}</div>
+                <ContentSection icon={<SparklesIcon size={18} />} title="Encerramento e Oração">
+                  <div style={{
+                    padding: '14px',
+                    fontStyle: 'italic',
+                    background: 'var(--c-primary-light)',
+                    border: '1px solid var(--c-primary-20)',
+                    borderRadius: 'var(--r-sm)',
+                    fontSize: '0.86rem',
+                    lineHeight: 1.6,
+                    color: 'var(--c-text-2)',
+                  }}>
+                    {gc.closingThought}
+                  </div>
                 </ContentSection>
               )}
 
-              {/* Regene option */}
-              <button className="btn btn-sm btn-ghost" onClick={handleGenerate} disabled={state.isLoading} style={{ alignSelf: 'center', marginTop: '10px' }}>
-                🔄 Regerar Roteiro com IA
+              {/* IA Regenerate trigger */}
+              <button
+                className="btn btn-sm btn-ghost"
+                onClick={handleGenerate}
+                disabled={state.isLoading}
+                style={{ alignSelf: 'center', marginTop: '12px' }}
+              >
+                🔄 Regerar Roteiro com Gemini IA
               </button>
+
             </div>
           )}
+
         </div>
       </div>
     </div>

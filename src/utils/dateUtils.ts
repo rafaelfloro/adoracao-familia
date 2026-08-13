@@ -53,3 +53,27 @@ export function toLocalDateString(date: Date): string {
   const dd = String(date.getDate()).padStart(2, '0');
   return `${yyyy}-${mm}-${dd}`;
 }
+
+/**
+ * Returns formatted range string for the week starting on dateStr.
+ * Example: "3 a 9 de Ago. de 2026"
+ */
+export function getWeekRangeString(dateStr: string): string {
+  const d = new Date(dateStr + 'T12:00:00');
+  const end = new Date(d);
+  end.setDate(d.getDate() + 6);
+
+  const startDay = d.getDate();
+  const endDay = end.getDate();
+
+  const startMonthStr = d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
+  const endMonthStr = end.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
+  const yearStr = d.getFullYear();
+
+  if (d.getMonth() === end.getMonth()) {
+    return `${startDay} a ${endDay} de ${startMonthStr}. de ${yearStr}`;
+  } else {
+    return `${startDay} de ${startMonthStr}. a ${endDay} de ${endMonthStr}. de ${yearStr}`;
+  }
+}
+

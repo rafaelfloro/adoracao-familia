@@ -8,6 +8,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   supabaseUrl: import.meta.env.VITE_SUPABASE_URL || 'https://thrfdgetmezrfnvclwub.supabase.co',
   supabaseAnonKey: import.meta.env.VITE_SUPABASE_ANON_KEY || '',
   useSupabase: false,
+  theme: 'light',
 };
 
 // ─── Local Storage ─────────────────────────────────────────────────────────

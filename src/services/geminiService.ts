@@ -171,7 +171,7 @@ export const generateFamilyWorshipContent = async (
   const ai = new GoogleGenAI({ apiKey });
 
   const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash',
+    model: 'gemini-1.5-flash',
     contents: FAMILY_WORSHIP_KNOWLEDGE + '\n\n' + buildPrompt(week),
     config: {
       tools: [{ googleSearch: {} }],

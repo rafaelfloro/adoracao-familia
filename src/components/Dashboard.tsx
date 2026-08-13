@@ -1,23 +1,22 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useApp } from '../context/AppContext';
-import { getCalendarGrid, toLocalDateString } from '../utils/dateUtils';
-import { WEEK_TYPE_ICONS, WEEK_TYPE_LABELS, USERS } from '../types';
+import { WeekCard } from './WeekCard';
 import { WeekDetailModal } from './WeekDetail';
+import { SunIcon, MoonIcon, PlusIcon, SettingsIcon } from './Icons';
 
 const MONTH_NAMES = [
   'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
 ];
 
-const WEEKDAY_NAMES = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
-
 export const Dashboard: React.FC = () => {
-  const { state, initializeMonthWeeks, addThemeToQueue } = useApp();
-  const { weeks, currentUser } = state;
+  const { state, navigate, initializeMonthWeeks, addThemeToQueue, saveAppSettings } = useApp();
+  const { weeks } = state;
 
   const today = useMemo(() => new Date(), []);
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [currentMonth, setCurrentMonth] = useState(today.getMonth());
+  
   const [activeWeekId, setActiveWeekId] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [themeInput, setThemeInput] = useState('');
@@ -26,12 +25,12 @@ export const Dashboard: React.FC = () => {
   const [isAdding, setIsAdding] = useState(false);
   const [addError, setAddError] = useState('');
 
-  // Auto initialize weeks for the currently displayed month
+  // Auto initialize standard weeks when displaying a month
   useEffect(() => {
     initializeMonthWeeks(currentYear, currentMonth);
-  }, [currentYear, currentMonth, weeks]); // Runs when month changes or weeks are updated
+  }, [currentYear, currentMonth, weeks]);
 
-  // Navigation handlers
+  // Navigate months
   const handlePrevMonth = () => {
     if (currentMonth === 0) {
       setCurrentMonth(11);
@@ -50,7 +49,7 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  // Add Theme to automatic queue
+  // Submit quick theme suggestion to queue
   const handleQuickAddSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!themeInput.trim()) return;
@@ -59,14 +58,13 @@ export const Dashboard: React.FC = () => {
     setAddError('');
 
     try {
-      // Automatically schedules to the first free Monday, assigns responsible to current user, and starts Gemini content generation!
       const newWeekId = await addThemeToQueue(themeInput, descInput, dynamicInput);
       setThemeInput('');
       setDescInput('');
       setDynamicInput('');
       setShowAddModal(false);
       
-      // Open details modal of the newly scheduled week
+      // Instantly pop up the details of the newly created week
       setActiveWeekId(newWeekId);
     } catch (err) {
       setAddError((err as Error).message || 'Erro ao agendar tema.');
@@ -75,120 +73,145 @@ export const Dashboard: React.FC = () => {
     }
   };
 
-  // Generate calendar grid dates
-  const gridDates = useMemo(() => {
-    return getCalendarGrid(currentYear, currentMonth);
-  }, [currentYear, currentMonth]);
+  // Filter weeks belonging to currently displayed month
+  const displayedMonthStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
+  const monthWeeks = useMemo(() => {
+    return weeks
+      .filter((w) => w.date.startsWith(displayedMonthStr))
+      .sort((a, b) => a.date.localeCompare(b.date));
+  }, [weeks, displayedMonthStr]);
 
-  const todayStr = useMemo(() => toLocalDateString(today), [today]);
+  // Toggle Dark/Light Theme
+  const handleToggleTheme = () => {
+    const nextTheme = state.settings.theme === 'dark' ? 'light' : 'dark';
+    saveAppSettings({ ...state.settings, theme: nextTheme });
+  };
 
   return (
-    <div className="page" style={{ paddingBottom: '100px' }}>
+    <div className="page" style={{ paddingBottom: '100px', background: 'var(--c-bg)', minHeight: '100vh' }}>
       
-      {/* Header Greeting */}
-      <div className="dashboard-header animate-fade" style={{ marginBottom: '20px' }}>
-        <div>
-          <p className="dashboard-greeting">Olá, adoração em família</p>
-          <h1 className="font-display">Família Floro</h1>
-        </div>
-        <div
-          className="avatar avatar-lg"
-          style={{
-            background: `linear-gradient(135deg, ${currentUser?.color}, ${currentUser?.color}aa)`,
-            boxShadow: `0 4px 16px ${currentUser?.color}44`,
-          }}
-        >
-          {currentUser?.initials}
-        </div>
-      </div>
-
-      {/* Quick Add Theme Trigger Card */}
-      <div className="card animate-up delay-1" style={{ marginBottom: '24px', borderLeft: '4px solid var(--c-accent)' }}>
-        <div className="card-body" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px' }}>
-          <div>
-            <h3 style={{ fontSize: '0.95rem', color: 'var(--c-text)' }}>Sugerir novo tema bíblico?</h3>
-            <p className="text-xs text-muted">A IA vai gerar o estudo completo e agendar na próxima data livre.</p>
+      {/* JW Style Top Header Bar */}
+      <div style={{
+        background: 'var(--c-primary-dark)',
+        color: '#ffffff',
+        padding: '12px 16px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        position: 'sticky',
+        top: 0,
+        zIndex: 50,
+        boxShadow: 'var(--shadow-sm)',
+        margin: '-20px -16px 20px -16px', // pull negative margin on containers
+      }}>
+        {/* Left Square Logo & Title */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{
+            background: 'var(--c-primary)',
+            color: '#ffffff',
+            fontWeight: 800,
+            fontSize: '0.95rem',
+            width: '28px',
+            height: '28px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            borderRadius: 'var(--r-xs)',
+          }}>
+            AF
           </div>
-          <button className="btn btn-sm btn-primary badge-accent" onClick={() => setShowAddModal(true)} style={{ background: 'var(--c-accent)', color: 'white', border: 'none' }}>
-            + Sugerir Tema
+          <div>
+            <span style={{ fontWeight: 800, fontSize: '0.85rem', letterSpacing: '0.03em' }}>ADORAÇÃO EM FAMÍLIA</span>
+            <span style={{ fontSize: '0.72rem', display: 'block', opacity: 0.8, marginTop: '-2px' }}>Família Floro</span>
+          </div>
+        </div>
+
+        {/* Right Actions */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {/* Theme Selector Toggle */}
+          <button
+            onClick={handleToggleTheme}
+            style={{ background: 'none', border: 'none', color: '#ffffff', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+            title="Alternar Tema"
+          >
+            {state.settings.theme === 'dark' ? <SunIcon size={20} /> : <MoonIcon size={20} />}
+          </button>
+          
+          <button
+            onClick={() => navigate('settings')}
+            style={{ background: 'none', border: 'none', color: '#ffffff', cursor: 'pointer', display: 'flex', alignItems: 'center' }}
+            title="Configurações"
+          >
+            <SettingsIcon size={20} />
           </button>
         </div>
       </div>
 
-      {/* Calendar Section */}
-      <div className="calendar-container animate-up delay-2">
-        <p className="section-title">📅 Cronograma Mensal</p>
-        
-        {/* Calendar Nav */}
-        <div className="calendar-header">
-          <button className="btn btn-sm btn-ghost" onClick={handlePrevMonth} style={{ fontSize: '1.1rem', padding: '0 12px' }}>
+      {/* JW Style Secondary Sub Bar */}
+      <div style={{
+        background: 'var(--c-surface-2)',
+        border: '1px solid var(--c-border)',
+        borderRadius: 'var(--r-sm)',
+        padding: '8px 12px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: '20px',
+        boxShadow: 'var(--shadow-xs)',
+      }}>
+        {/* Month Navigation */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <button className="btn btn-sm btn-ghost" onClick={handlePrevMonth} style={{ padding: '4px 8px', fontSize: '0.9rem' }}>
             ◀
           </button>
-          <div className="calendar-month-title">
+          <span style={{ fontWeight: 700, fontSize: '0.92rem', color: 'var(--c-primary)', textTransform: 'capitalize' }}>
             {MONTH_NAMES[currentMonth]} {currentYear}
-          </div>
-          <button className="btn btn-sm btn-ghost" onClick={handleNextMonth} style={{ fontSize: '1.1rem', padding: '0 12px' }}>
+          </span>
+          <button className="btn btn-sm btn-ghost" onClick={handleNextMonth} style={{ padding: '4px 8px', fontSize: '0.9rem' }}>
             ▶
           </button>
         </div>
 
-        {/* Calendar Grid */}
-        <div className="calendar-grid">
-          {/* Weekday headers */}
-          {WEEKDAY_NAMES.map((dayName) => (
-            <div key={dayName} className="calendar-day-header">
-              {dayName}
-            </div>
-          ))}
+        <button
+          className="btn btn-sm btn-primary"
+          style={{ background: 'var(--c-accent)', border: 'none', color: '#ffffff', display: 'flex', alignItems: 'center', gap: '4px' }}
+          onClick={() => setShowAddModal(true)}
+        >
+          <PlusIcon size={16} />
+          Sugerir Tema
+        </button>
+      </div>
 
-          {/* Grid cells */}
-          {gridDates.map((date, idx) => {
-            const dateStr = toLocalDateString(date);
-            const isOutside = date.getMonth() !== currentMonth;
-            const isToday = dateStr === todayStr;
-            const weekWorship = weeks.find((w) => w.date === dateStr);
-
-            return (
-              <div
-                key={idx}
-                className={`calendar-cell ${isOutside ? 'outside' : ''} ${isToday ? 'today' : ''}`}
-              >
-                <div className="calendar-day-number">{date.getDate()}</div>
-                
-                {weekWorship && (
-                  <div
-                    className={`calendar-worship-card ${weekWorship.completed ? 'completed' : ''}`}
-                    onClick={() => setActiveWeekId(weekWorship.id)}
-                    style={
-                      !weekWorship.completed && weekWorship.type === 'theme'
-                        ? { borderLeft: `3.5px solid var(--c-accent)` }
-                        : undefined
-                    }
-                  >
-                    <div className="worship-card-title">
-                      {weekWorship.type === 'theme' && weekWorship.theme ? weekWorship.theme : WEEK_TYPE_LABELS[weekWorship.type]}
-                    </div>
-                    <div className="worship-card-meta">
-                      <span className="worship-card-type-icon">
-                        {WEEK_TYPE_ICONS[weekWorship.type]}
-                      </span>
-                      {weekWorship.type !== 'free' && (
-                        <span
-                          className="worship-card-initials"
-                          style={{
-                            background: USERS.find((u) => u.id === weekWorship.responsibleId)?.color || 'var(--c-primary)',
-                          }}
-                        >
-                          {USERS.find((u) => u.id === weekWorship.responsibleId)?.initials || 'F'}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
-            );
-          })}
+      {/* Watchtower Study Schedule Sheet layout */}
+      <div style={{
+        background: 'var(--c-surface)',
+        border: '1px solid var(--c-border)',
+        borderRadius: 'var(--r-md)',
+        boxShadow: 'var(--shadow-sm)',
+        padding: '20px',
+      }}>
+        <div style={{ borderBottom: '1px solid var(--c-border)', paddingBottom: '10px', marginBottom: '16px' }}>
+          <h2 style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--c-primary)' }}>Programa de Estudo</h2>
+          <p className="text-xs text-muted" style={{ marginTop: '2px' }}>Organização das reuniões semanais de Adoração em Família</p>
         </div>
+
+        {/* Weekly Schedule list */}
+        {monthWeeks.length > 0 ? (
+          <div>
+            {monthWeeks.map((week, idx) => (
+              <WeekCard
+                key={week.id}
+                week={week}
+                index={idx}
+                onClick={() => setActiveWeekId(week.id)}
+              />
+            ))}
+          </div>
+        ) : (
+          <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--c-text-3)' }}>
+            Nenhuma semana agendada para este mês.
+          </div>
+        )}
       </div>
 
       {/* Week Details Popup Modal */}
@@ -196,12 +219,12 @@ export const Dashboard: React.FC = () => {
         <WeekDetailModal weekId={activeWeekId} onClose={() => setActiveWeekId(null)} />
       )}
 
-      {/* Quick Add Theme Dialog Modal */}
+      {/* Suggest Theme Dialog Popup Modal */}
       {showAddModal && (
         <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
-          <div className="modal-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '480px' }}>
+          <div className="modal-container" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '460px' }}>
             <div className="modal-header">
-              <div className="modal-title">✨ Sugerir Tema de Adoração</div>
+              <div className="modal-title">Sugerir Tema de Adoração</div>
               <button className="modal-close-btn" onClick={() => setShowAddModal(false)}>&times;</button>
             </div>
             <div className="modal-body">
@@ -219,18 +242,18 @@ export const Dashboard: React.FC = () => {
                     disabled={isAdding}
                     autoFocus
                   />
-                  <span className="text-xs text-muted">Exemplo: Importância da oração, como fazer boas escolhas...</span>
+                  <span className="text-xs text-muted">A IA agendará no próximo slot vago do calendário.</span>
                 </div>
 
                 <div className="input-group">
-                  <label className="input-label" htmlFor="popup-desc">📝 Descrição/Contexto <span className="text-muted">(opcional)</span></label>
+                  <label className="input-label" htmlFor="popup-desc">📝 Contexto / Detalhes <span className="text-muted">(opcional)</span></label>
                   <textarea
                     id="popup-desc"
                     className="input textarea"
-                    style={{ minHeight: '80px' }}
+                    style={{ minHeight: '70px' }}
                     value={descInput}
                     onChange={(e) => setDescInput(e.target.value)}
-                    placeholder="Diga se tem algum foco específico que gostaria que a IA elaborasse..."
+                    placeholder="Especifique algum foco ou relato que queira abordar..."
                     disabled={isAdding}
                   />
                 </div>
@@ -243,10 +266,9 @@ export const Dashboard: React.FC = () => {
                     style={{ minHeight: '60px' }}
                     value={dynamicInput}
                     onChange={(e) => setDynamicInput(e.target.value)}
-                    placeholder="Ex: Quiz bíblico, jogo de tabuleiro..."
+                    placeholder="Caso queira sugerir alguma atividade específica..."
                     disabled={isAdding}
                   />
-                  <span className="text-xs text-muted">Se deixar vazio, a IA vai sugerir dinâmicas ótimas.</span>
                 </div>
 
                 {addError && (
@@ -258,14 +280,14 @@ export const Dashboard: React.FC = () => {
 
                 <button
                   type="submit"
-                  className="btn btn-primary btn-block btn-lg"
-                  style={{ background: 'var(--c-accent)', border: 'none', color: 'white' }}
+                  className="btn btn-primary btn-block"
+                  style={{ background: 'var(--c-accent)', border: 'none', color: '#ffffff', fontWeight: 'bold' }}
                   disabled={isAdding || !themeInput.trim()}
                 >
                   {isAdding ? (
-                    <><div className="spinner" style={{ borderTopColor: '#fff' }} /> Agendando e gerando roteiro...</>
+                    <><div className="spinner" style={{ borderTopColor: '#fff' }} /> Agendando...</>
                   ) : (
-                    <>✨ Agendar e Criar Estudo</>
+                    <>✨ Enviar para Fila</>
                   )}
                 </button>
 

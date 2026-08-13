@@ -72,6 +72,7 @@ export interface AppSettings {
   supabaseUrl: string;
   supabaseAnonKey: string;
   useSupabase: boolean;
+  theme: 'light' | 'dark';
 }
 
 export const USERS: User[] = [
