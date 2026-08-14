@@ -11,8 +11,8 @@ Seu papel NÃO é conduzir a reunião nem ensinar verdades bíblicas diretamente
 
 ━━━ DIRETRIZES DE ESTILO ━━━
 1. TOM SUGESTIVO: Use sempre um tom de sugestão (ex: "Sugestão de dinâmica", "Ideias para conversar"). Nunca fale como se fosse o dirigente ou instrutor da adoração. Nunca use a primeira pessoa do plural ("nós", "vamos fazer") nem cite nomes específicos de membros da família.
-2. TEXTOS RICOS E DETALHADOS: Escreva explicações detalhadas, textos longos e encorajadores em português. Não resuma demais os parágrafos. A família gosta de explicações ricas.
-3. PARÁGRAFOS DO OBJETIVO: Escreva o campo "objective" detalhadamente em 2 ou 3 parágrafos explicativos e ricos. Cada parágrafo será numerado automaticamente no site como um artigo, então garanta que fluam de forma lógica.
+2. CONCISÃO NOS TEXTOS DA IA: O objetivo e consideração deve ser extremamente curto e direto (no máximo 1 ou 2 frases curtas). Não escreva discursos teológicos longos nem parágrafos explicativos extensos ("sem textão corrido").
+3. BASTANTE TEXTOS BÍBLICOS: Forneça uma boa lista de textos bíblicos (de 3 a 5 versículos ou mais) para a família ler na Bíblia. Os versículos devem ser a parte principal.
 4. SEM ENCERRAMENTO/ORAÇÃO: Não inclua nenhuma oração, encerramento ou consideração final.
 `;
 
@@ -21,7 +21,6 @@ Seu papel NÃO é conduzir a reunião nem ensinar verdades bíblicas diretamente
 export const searchJwLinks = async (query: string): Promise<JwLink[]> => {
   const targetUrl = `https://html.duckduckgo.com/html/?q=site:jw.org ${query}`;
   
-  // Lista de proxies CORS públicos para tentar em sequência caso um falhe ou dê timeout (408)
   const proxies = [
     (url: string) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
     (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
@@ -59,7 +58,6 @@ export const searchJwLinks = async (query: string): Promise<JwLink[]> => {
   }
   
   try {
-    // Regex to match DuckDuckGo HTML links and titles
     const regex = /class="result__link" href="[^"]*uddg=([^&"]+)[^"]*"[^>]*>([\s\S]*?)<\/a>/g;
     const links: JwLink[] = [];
     let match;
@@ -67,7 +65,7 @@ export const searchJwLinks = async (query: string): Promise<JwLink[]> => {
     while ((match = regex.exec(html)) !== null && links.length < 4) {
       try {
         const rawUrl = decodeURIComponent(match[1]);
-        const title = match[2].replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim(); // strip html tags & double spaces
+        const title = match[2].replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
         
         if (rawUrl.includes('jw.org') && !links.some(l => l.url === rawUrl)) {
           const type = rawUrl.includes('/videos/') ? 'video' :
@@ -111,14 +109,13 @@ const buildPrompt = (week: Partial<Week>, realLinks: JwLink[]): string => {
   }
 
   const dynamicSection = customDynamic
-    ? `DINÂMICA JÁ DEFINIDA PELA FAMÍLIA: "${customDynamic}"\n→ Incorpore e descreva o passo a passo detalhado desta dinâmica no roteiro.`
-    : `DINÂMICA: A família não escolheu uma dinâmica.\n→ Sugira e detalhe o passo a passo de uma dinâmica envolvente e prática para três adultos relacionada ao assunto.`;
+    ? `DINÂMICA JÁ DEFINIDA PELA FAMÍLIA: "${customDynamic}"\n→ Incorpore e descreva o passo a passo resumido desta dinâmica no roteiro.`
+    : `DINÂMICA: A família não escolheu uma dinâmica.\n→ Sugira de forma curta e prática uma dinâmica interativa para três adultos relacionada ao assunto.`;
 
   const descSection = description
     ? `CONTEXTO ADICIONAL: "${description}"\n→ Considere este contexto ao formular o roteiro.`
     : '';
 
-  // Format scraped real links to enforce strictly in the JSON
   const linksContext = realLinks.length > 0
     ? `VOCÊ DEVE USAR OS SEGUINTES LINKS REAIS DO JW.ORG NO CAMPO "jwLinks" DO JSON. NÃO INVENTE NENHUM OUTRO:
 ${realLinks.map((l, i) => `${i + 1}. Título: "${l.title}" | URL: "${l.url}" | Descrição: "${l.description}"`).join('\n')}`
@@ -137,7 +134,7 @@ ${linksContext}
 Retorne APENAS um JSON válido, sem texto antes ou depois, seguindo esta estrutura exata:
 
 {
-  "objective": "Escreva 2 ou 3 parágrafos longos, detalhados e ricos sobre o tema. Use emojis. Explique de forma profunda, porém com tom de sugestão, a importância deste assunto para os cristãos hoje.",
+  "objective": "Resumo curtíssimo de 1 ou 2 frases curtas sobre o propósito de conversar sobre este tema. Use emojis. Exemplo: '💡 Sugestões de pontos práticos para meditação sobre como manter a integridade cristã no trabalho.'",
   
   "bibleVerses": [
     { 
@@ -148,12 +145,12 @@ Retorne APENAS um JSON válido, sem texto antes ou depois, seguindo esta estrutu
   
   "discussionQuestions": [
     { 
-      "question": "Pergunta reflexiva detalhada?",
-      "hint": "Ideia explicativa de reflexão prática baseada no tema para ajudar na conversa"
+      "question": "Pergunta reflexiva curta?",
+      "hint": "Dica ou ângulo muito curto de reflexão prática"
     }
   ],
   
-  "dynamic": "Descreva detalhadamente em vários parágrafos o passo a passo da dinâmica, materiais necessários e como aplicá-la com três adultos de forma envolvente.",
+  "dynamic": "Sugestão prática de dinâmica para adultos (no máximo 1 ou 2 parágrafos curtos).",
   
   "jwLinks": [
     {
@@ -165,12 +162,12 @@ Retorne APENAS um JSON válido, sem texto antes ou depois, seguindo esta estrutu
 }
 
 REGRAS RÍGIDAS:
-1. "objective": Explique em 2 ou 3 parágrafos ricos e detalhados. Não abrevie nem resuma demais.
-2. "bibleVerses": Forneça de 3 a 5 versículos bíblicos altamente relevantes e bem explicados.
-3. "discussionQuestions": Sugira de 3 a 5 perguntas interessantes para a família meditar.
+1. "objective": Máximo 2 frases curtas. Não escreva textos doutrinais ou discursos explicativos.
+2. "bibleVerses": Forneça uma boa lista de textos bíblicos (de 3 a 5 versículos ou mais para a família ler).
+3. "discussionQuestions": Sugira de 2 a 4 perguntas reflexivas curtas.
 4. "jwLinks": Coloque apenas os links que foram listados no contexto acima. Se não houver links, deixe o array vazio [].
 5. NÃO use markdown (como **negrito**, # títulos, etc.) dentro das propriedades do JSON. Use apenas texto plano.
-6. NUNCA cite nomes de pessoas específicas e nunca fale como "dirigente" ou "presidente" da adoração. Não inclua oração ou encerramento.
+6. NUNCA cite nomes de pessoas específicas e nunca fale como "dirigente" da adoração. Não inclua oração ou encerramento.
 `;
 };
 
@@ -189,13 +186,10 @@ export const generateFamilyWorshipContent = async (
 
   const queryTopic = week.theme || WEEK_TYPE_LABELS[week.type || 'theme'] || 'estudo bíblico';
   
-  // 1. Fetch real links via DuckDuckGo and CORS proxy asynchronously
   const realLinks = await searchJwLinks(queryTopic);
 
-  // 2. Initialize Gemini API Client
   const ai = new GoogleGenAI({ apiKey });
 
-  // 3. Make the API Call to Gemini
   const response = await ai.models.generateContent({
     model: modelName || 'gemini-3.5-flash',
     contents: FAMILY_WORSHIP_KNOWLEDGE + '\n\n' + buildPrompt(week, realLinks),
@@ -206,7 +200,6 @@ export const generateFamilyWorshipContent = async (
 
   const text = response.text ?? '';
 
-  // Extract JSON structure from the markdown block response
   const jsonMatch = text.match(/```(?:json)?\s*([\s\S]*?)```/) || text.match(/(\{[\s\S]*\})/);
 
   if (!jsonMatch) {
@@ -220,7 +213,6 @@ export const generateFamilyWorshipContent = async (
     throw new Error('O formato retornado pela IA está corrompido. Tente novamente.');
   }
 
-  // Ensure fallback structure constraints are filled safely
   return {
     objective: parsed.objective || 'Sugestões de pontos de meditação.',
     bibleVerses: parsed.bibleVerses || [],
