@@ -163,7 +163,7 @@ export const WeekDetailModal: React.FC<WeekDetailModalProps> = ({ weekId, onClos
   };
 
   const handleGenerate = () => {
-    generateContent(week.id);
+    generateContent(week.id, week);
   };
 
   const handleSaveTheme = () => {

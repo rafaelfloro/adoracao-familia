@@ -83,7 +83,7 @@ interface AppContextValue {
   navigate: (page: Page, weekId?: string) => void;
   upsertWeek: (week: Week) => Promise<void>;
   deleteWeek: (id: string) => Promise<void>;
-  generateContent: (weekId: string) => Promise<void>;
+  generateContent: (weekId: string, customWeekObj?: Week) => Promise<void>;
   saveAppSettings: (settings: AppSettings) => void;
   exportData: () => void;
   importData: (file: File) => Promise<void>;
@@ -202,8 +202,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
 
-  const generateContent = async (weekId: string) => {
-    const week = state.weeks.find((w) => w.id === weekId);
+  const generateContent = async (weekId: string, customWeekObj?: Week) => {
+    const week = customWeekObj || state.weeks.find((w) => w.id === weekId);
     if (!week) return;
 
     dispatch({ type: 'SET_LOADING', payload: true });
@@ -379,7 +379,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
 
     await upsertWeek(updatedWeek);
-    generateContent(updatedWeek.id).catch((err) => {
+    generateContent(updatedWeek.id, updatedWeek).catch((err) => {
       console.error('Erro na geração automática da IA:', err);
     });
 
