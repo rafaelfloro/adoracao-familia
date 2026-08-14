@@ -46,6 +46,14 @@ export const WeekDetailModal: React.FC<WeekDetailModalProps> = ({ weekId, onClos
   const [editingTheme, setEditingTheme] = useState(false);
   const [themeInput, setThemeInput] = useState(week?.theme ?? '');
 
+  // Editing States for Generated Content
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedObjective, setEditedObjective] = useState('');
+  const [editedDynamic, setEditedDynamic] = useState('');
+  const [editedVerses, setEditedVerses] = useState<BibleVerse[]>([]);
+  const [editedQuestions, setEditedQuestions] = useState<DiscussionQuestion[]>([]);
+  const [editedLinks, setEditedLinks] = useState<JwLink[]>([]);
+
   if (!week) return null;
 
   const responsible = USERS.find((u) => u.id === week.responsibleId);
@@ -86,8 +94,35 @@ export const WeekDetailModal: React.FC<WeekDetailModalProps> = ({ weekId, onClos
       };
       upsertWeek(updated);
       setEditingTheme(false);
-      generateContent(week.id).catch(console.error);
     }
+  };
+
+  const startEditing = () => {
+    if (!gc) return;
+    setEditedObjective(gc.objective);
+    setEditedDynamic(gc.dynamic);
+    setEditedVerses(gc.bibleVerses || []);
+    setEditedQuestions(gc.discussionQuestions || []);
+    setEditedLinks(gc.jwLinks || []);
+    setIsEditing(true);
+  };
+
+  const handleSaveEdits = async () => {
+    if (!gc) return;
+    const updatedGc: GeneratedContent = {
+      ...gc,
+      objective: editedObjective,
+      dynamic: editedDynamic,
+      bibleVerses: editedVerses,
+      discussionQuestions: editedQuestions,
+      jwLinks: editedLinks,
+    };
+    await upsertWeek({
+      ...week,
+      generatedContent: updatedGc,
+      updatedAt: new Date().toISOString(),
+    });
+    setIsEditing(false);
   };
 
   // Get other weeks of the same month for swapping
@@ -133,7 +168,7 @@ export const WeekDetailModal: React.FC<WeekDetailModalProps> = ({ weekId, onClos
 
   return createPortal(
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+      <div className="modal-container modal-drawer" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="modal-header">
           <div className="modal-title">Adoração em Família</div>
@@ -355,56 +390,151 @@ export const WeekDetailModal: React.FC<WeekDetailModalProps> = ({ weekId, onClos
           {gc && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               
-              {/* Objective (numbered paragraphs Watchtower style) */}
+              {/* Objective */}
               <ContentSection icon={<BookIcon size={18} />} title="Objetivo e Consideração">
-                <div className="wt-paragraphs-container">
-                  {renderNumberedParagraphs(gc.objective)}
-                </div>
+                {isEditing ? (
+                  <textarea
+                    className="input textarea"
+                    style={{ width: '100%', minHeight: '90px', fontSize: '0.86rem', padding: '10px', background: 'var(--c-surface)', color: 'var(--c-text)', border: '1px solid var(--c-border)' }}
+                    value={editedObjective}
+                    onChange={(e) => setEditedObjective(e.target.value)}
+                    placeholder="Objetivo da consideração..."
+                  />
+                ) : (
+                  <div className="wt-paragraphs-container">
+                    {renderNumberedParagraphs(gc.objective)}
+                  </div>
+                )}
               </ContentSection>
 
               {/* Bible Verses */}
-              {gc.bibleVerses?.length > 0 && (
+              {((isEditing && editedVerses.length >= 0) || (gc.bibleVerses && gc.bibleVerses.length > 0)) && (
                 <ContentSection icon={<BookIcon size={18} />} title="Textos Bíblicos Centrais">
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    {gc.bibleVerses.map((v: BibleVerse, i: number) => (
-                      <div key={i} className="bible-verse-item" style={{
-                        padding: '12px',
-                        background: 'var(--c-primary-light)',
-                        borderLeft: '3px solid var(--c-primary)',
-                        borderRadius: '0 var(--r-sm) var(--r-sm) 0',
-                      }}>
-                        <div className="bible-verse-ref" style={{ fontWeight: 700, fontSize: '0.82rem', color: 'var(--c-primary)', marginBottom: '4px' }}>
-                          {v.reference}
+                  {isEditing ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {editedVerses.map((v, i) => (
+                        <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '6px', border: '1px solid var(--c-border)', padding: '10px', borderRadius: 'var(--r-sm)', background: 'rgba(0,0,0,0.02)' }}>
+                          <input
+                            type="text"
+                            className="input"
+                            style={{ fontSize: '0.82rem', padding: '6px', fontWeight: 'bold' }}
+                            placeholder="Referência (ex: Salmo 23:1)"
+                            value={v.reference}
+                            onChange={(e) => {
+                              const updated = [...editedVerses];
+                              updated[i] = { ...v, reference: e.target.value };
+                              setEditedVerses(updated);
+                            }}
+                          />
+                          <textarea
+                            className="input textarea"
+                            style={{ fontSize: '0.82rem', padding: '6px', minHeight: '50px' }}
+                            placeholder="Texto do versículo..."
+                            value={v.text}
+                            onChange={(e) => {
+                              const updated = [...editedVerses];
+                              updated[i] = { ...v, text: e.target.value };
+                              setEditedVerses(updated);
+                            }}
+                          />
+                          <button type="button" className="btn btn-sm btn-ghost" style={{ alignSelf: 'flex-end', color: 'var(--c-orange)', padding: '2px 8px', fontSize: '0.72rem' }} onClick={() => setEditedVerses(editedVerses.filter((_, idx) => idx !== i))}>
+                            Remover Versículo
+                          </button>
                         </div>
-                        <div className="bible-verse-text" style={{ fontSize: '0.88rem', fontStyle: 'italic', lineHeight: 1.5, color: 'var(--c-text)' }}>
-                          "{v.text}"
+                      ))}
+                      <button type="button" className="btn btn-sm btn-outline" style={{ alignSelf: 'flex-start' }} onClick={() => setEditedVerses([...editedVerses, { reference: '', text: '' }])}>
+                        + Adicionar Versículo
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      {gc.bibleVerses?.map((v: BibleVerse, i: number) => (
+                        <div key={i} className="bible-verse-item" style={{
+                          padding: '12px',
+                          background: 'var(--c-primary-light)',
+                          borderLeft: '3px solid var(--c-primary)',
+                          borderRadius: '0 var(--r-sm) var(--r-sm) 0',
+                        }}>
+                          <div className="bible-verse-ref" style={{ fontWeight: 700, fontSize: '0.82rem', color: 'var(--c-primary)', marginBottom: '4px' }}>
+                            {v.reference}
+                          </div>
+                          <div className="bible-verse-text" style={{ fontSize: '0.88rem', fontStyle: 'italic', lineHeight: 1.5, color: 'var(--c-text)' }}>
+                            "{v.text}"
+                          </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
                 </ContentSection>
               )}
 
               {/* Questions */}
-              {gc.discussionQuestions?.length > 0 && (
+              {((isEditing && editedQuestions.length >= 0) || (gc.discussionQuestions && gc.discussionQuestions.length > 0)) && (
                 <ContentSection icon={<DocIcon size={18} />} title="Perguntas para Meditação">
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                    {gc.discussionQuestions.map((q: DiscussionQuestion, i: number) => (
-                      <div key={i} className="question-item" style={{ padding: '4px 0' }}>
-                        <p className="question-text" style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--c-text)' }}>
-                          <span style={{ color: 'var(--c-primary)', marginRight: '6px', fontWeight: 700 }}>{i + 1}.</span>
-                          {q.question}
-                        </p>
-                        {q.hint && <p className="question-hint" style={{ fontSize: '0.78rem', color: 'var(--c-text-2)', marginLeft: '18px', marginTop: '3px' }}>💡 {q.hint}</p>}
-                      </div>
-                    ))}
-                  </div>
+                  {isEditing ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {editedQuestions.map((q, i) => (
+                        <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '6px', border: '1px solid var(--c-border)', padding: '10px', borderRadius: 'var(--r-sm)', background: 'rgba(0,0,0,0.02)' }}>
+                          <input
+                            type="text"
+                            className="input"
+                            style={{ fontSize: '0.82rem', padding: '6px' }}
+                            placeholder="Pergunta..."
+                            value={q.question}
+                            onChange={(e) => {
+                              const updated = [...editedQuestions];
+                              updated[i] = { ...q, question: e.target.value };
+                              setEditedQuestions(updated);
+                            }}
+                          />
+                          <input
+                            type="text"
+                            className="input"
+                            style={{ fontSize: '0.82rem', padding: '6px' }}
+                            placeholder="Sugestão de resposta / Dica (opcional)"
+                            value={q.hint || ''}
+                            onChange={(e) => {
+                              const updated = [...editedQuestions];
+                              updated[i] = { ...q, hint: e.target.value };
+                              setEditedQuestions(updated);
+                            }}
+                          />
+                          <button type="button" className="btn btn-sm btn-ghost" style={{ alignSelf: 'flex-end', color: 'var(--c-orange)', padding: '2px 8px', fontSize: '0.72rem' }} onClick={() => setEditedQuestions(editedQuestions.filter((_, idx) => idx !== i))}>
+                            Remover Pergunta
+                          </button>
+                        </div>
+                      ))}
+                      <button type="button" className="btn btn-sm btn-outline" style={{ alignSelf: 'flex-start' }} onClick={() => setEditedQuestions([...editedQuestions, { question: '', hint: '' }])}>
+                        + Adicionar Pergunta
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      {gc.discussionQuestions?.map((q: DiscussionQuestion, i: number) => (
+                        <div key={i} className="question-item" style={{ padding: '4px 0' }}>
+                          <p className="question-text" style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--c-text)' }}>
+                            <span style={{ color: 'var(--c-primary)', marginRight: '6px', fontWeight: 700 }}>{i + 1}.</span>
+                            {q.question}
+                          </p>
+                          {q.hint && <p className="question-hint" style={{ fontSize: '0.78rem', color: 'var(--c-text-2)', marginLeft: '18px', marginTop: '3px' }}>💡 {q.hint}</p>}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </ContentSection>
               )}
 
               {/* Dynamic activity */}
-              {gc.dynamic && (
-                <ContentSection icon={<SparklesIcon size={18} />} title="Atividade Prática / Dinâmica">
+              <ContentSection icon={<SparklesIcon size={18} />} title="Atividade Prática / Dinâmica">
+                {isEditing ? (
+                  <textarea
+                    className="input textarea"
+                    style={{ width: '100%', minHeight: '90px', fontSize: '0.86rem', padding: '10px', background: 'var(--c-surface)', color: 'var(--c-text)', border: '1px solid var(--c-border)' }}
+                    value={editedDynamic}
+                    onChange={(e) => setEditedDynamic(e.target.value)}
+                    placeholder="Descrição da dinâmica..."
+                  />
+                ) : (
                   <div className="dynamic-box" style={{
                     padding: '14px',
                     background: 'var(--c-bg)',
@@ -415,59 +545,110 @@ export const WeekDetailModal: React.FC<WeekDetailModalProps> = ({ weekId, onClos
                   }}>
                     {gc.dynamic}
                   </div>
-                </ContentSection>
-              )}
+                )}
+              </ContentSection>
 
               {/* Supplementary resources (jw.org) */}
-              {gc.jwLinks?.length > 0 && (
+              {((isEditing && editedLinks.length >= 0) || (gc.jwLinks && gc.jwLinks.length > 0)) && (
                 <ContentSection icon={<DocIcon size={18} />} title="Recursos de Pesquisa Complementares">
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    {gc.jwLinks.map((link: JwLink, i: number) => {
-                      const rawDesc = link.description || '';
-                      const typeMatch = rawDesc.match(/^\[(ARTIGO|VIDEO|VÍDEO|ESTUDO|PROGRAMA|RECURSO)\]/i);
-                      const linkType = typeMatch ? typeMatch[1].toUpperCase() : (
-                        (link.url || '').includes('tv.jw.org') ? 'VÍDEO' :
-                        (link.url || '').includes('wol.jw.org') ? 'ESTUDO' : 'ARTIGO'
-                      );
-                      const cleanDesc = rawDesc.replace(/^\[.*?\]\s*/, '');
-                      const palette: Record<string, string> = {
-                        ARTIGO: '#4a6da7', VIDEO: '#5b3c88', VÍDEO: '#5b3c88',
-                        ESTUDO: '#2d9964', PROGRAMA: '#d97706', RECURSO: '#799fcc',
-                      };
-                      const color = palette[linkType] || '#4a6da7';
-                      return (
-                        <a key={i} href={link.url} target="_blank" rel="noopener noreferrer"
-                          style={{
-                            display: 'flex', gap: '8px', padding: '10px',
-                            borderRadius: 'var(--r-sm)', border: `1px solid ${color}20`,
-                            background: `${color}05`, textDecoration: 'none',
-                          }}
-                        >
-                          <div style={{ flex: 1, minWidth: 0 }}>
-                            <span style={{
-                              display: 'inline-block', fontSize: '0.58rem', fontWeight: 700,
-                              color, background: `${color}15`, padding: '1px 5px',
-                              borderRadius: 'var(--r-full)', marginBottom: '3px',
-                            }}>{linkType}</span>
-                            <div style={{ fontWeight: 700, fontSize: '0.82rem', color: 'var(--c-text)', lineHeight: 1.2 }}>
-                              {link.title}
-                            </div>
-                            {cleanDesc && (
-                              <div style={{ fontSize: '0.74rem', color: 'var(--c-text-2)', marginTop: '2px', lineHeight: 1.4 }}>
-                                {cleanDesc}
+                  {isEditing ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {editedLinks.map((link, i) => (
+                        <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '6px', border: '1px solid var(--c-border)', padding: '10px', borderRadius: 'var(--r-sm)', background: 'rgba(0,0,0,0.02)' }}>
+                          <input
+                            type="text"
+                            className="input"
+                            style={{ fontSize: '0.82rem', padding: '6px', fontWeight: 'bold' }}
+                            placeholder="Título do Link..."
+                            value={link.title}
+                            onChange={(e) => {
+                              const updated = [...editedLinks];
+                              updated[i] = { ...link, title: e.target.value };
+                              setEditedLinks(updated);
+                            }}
+                          />
+                          <input
+                            type="text"
+                            className="input"
+                            style={{ fontSize: '0.82rem', padding: '6px' }}
+                            placeholder="URL (começando com http/https)..."
+                            value={link.url}
+                            onChange={(e) => {
+                              const updated = [...editedLinks];
+                              updated[i] = { ...link, url: e.target.value };
+                              setEditedLinks(updated);
+                            }}
+                          />
+                          <input
+                            type="text"
+                            className="input"
+                            style={{ fontSize: '0.82rem', padding: '6px' }}
+                            placeholder="Descrição curta (ex: [ARTIGO] Leitura de apoio)"
+                            value={link.description || ''}
+                            onChange={(e) => {
+                              const updated = [...editedLinks];
+                              updated[i] = { ...link, description: e.target.value };
+                              setEditedLinks(updated);
+                            }}
+                          />
+                          <button type="button" className="btn btn-sm btn-ghost" style={{ alignSelf: 'flex-end', color: 'var(--c-orange)', padding: '2px 8px', fontSize: '0.72rem' }} onClick={() => setEditedLinks(editedLinks.filter((_, idx) => idx !== i))}>
+                            Remover Link
+                          </button>
+                        </div>
+                      ))}
+                      <button type="button" className="btn btn-sm btn-outline" style={{ alignSelf: 'flex-start' }} onClick={() => setEditedLinks([...editedLinks, { title: '', url: '', description: '' }])}>
+                        + Adicionar Link
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {gc.jwLinks?.map((link: JwLink, i: number) => {
+                        const rawDesc = link.description || '';
+                        const typeMatch = rawDesc.match(/^\[(ARTIGO|VIDEO|VÍDEO|ESTUDO|PROGRAMA|RECURSO)\]/i);
+                        const linkType = typeMatch ? typeMatch[1].toUpperCase() : (
+                          (link.url || '').includes('tv.jw.org') ? 'VÍDEO' :
+                          (link.url || '').includes('wol.jw.org') ? 'ESTUDO' : 'ARTIGO'
+                        );
+                        const cleanDesc = rawDesc.replace(/^\[.*?\]\s*/, '');
+                        const palette: Record<string, string> = {
+                          ARTIGO: '#4a6da7', VIDEO: '#5b3c88', VÍDEO: '#5b3c88',
+                          ESTUDO: '#2d9964', PROGRAMA: '#d97706', RECURSO: '#799fcc',
+                        };
+                        const color = palette[linkType] || '#4a6da7';
+                        return (
+                          <a key={i} href={link.url} target="_blank" rel="noopener noreferrer"
+                            style={{
+                              display: 'flex', gap: '8px', padding: '10px',
+                              borderRadius: 'var(--r-sm)', border: `1px solid ${color}20`,
+                              background: `${color}05`, textDecoration: 'none',
+                            }}
+                          >
+                            <div style={{ flex: 1, minWidth: 0 }}>
+                              <span style={{
+                                display: 'inline-block', fontSize: '0.58rem', fontWeight: 700,
+                                color, background: `${color}15`, padding: '1px 5px',
+                                borderRadius: 'var(--r-full)', marginBottom: '3px',
+                              }}>{linkType}</span>
+                              <div style={{ fontWeight: 700, fontSize: '0.82rem', color: 'var(--c-text)', lineHeight: 1.2 }}>
+                                {link.title}
                               </div>
-                            )}
-                          </div>
-                          <span style={{ color, fontSize: '0.85rem' }}>↗</span>
-                        </a>
-                      );
-                    })}
-                  </div>
+                              {cleanDesc && (
+                                <div style={{ fontSize: '0.74rem', color: 'var(--c-text-2)', marginTop: '2px', lineHeight: 1.4 }}>
+                                  {cleanDesc}
+                                </div>
+                              )}
+                            </div>
+                            <span style={{ color, fontSize: '0.85rem' }}>↗</span>
+                          </a>
+                        );
+                      })}
+                    </div>
+                  )}
                 </ContentSection>
               )}
 
-              {/* Encerramento */}
-              {gc.closingThought && (
+              {/* Encerramento opcional (se gerado) */}
+              {gc.closingThought && !isEditing && (
                 <ContentSection icon={<SparklesIcon size={18} />} title="Encerramento e Oração">
                   <div style={{
                     padding: '14px',
@@ -484,20 +665,35 @@ export const WeekDetailModal: React.FC<WeekDetailModalProps> = ({ weekId, onClos
                 </ContentSection>
               )}
 
-              {/* IA Regenerate trigger */}
-              <button
-                className="btn btn-sm btn-ghost"
-                onClick={handleGenerate}
-                disabled={state.isLoading}
-                style={{ alignSelf: 'center', marginTop: '12px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-              >
-                {state.isLoading ? (
-                  <><div className="spinner" style={{ width: '14px', height: '14px' }} /> Regerando...</>
-                ) : (
-                  <>🔄 Regerar Roteiro com Gemini IA</>
-                )}
-              </button>
-
+              {/* Botões de Ação do Roteiro */}
+              {isEditing ? (
+                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '16px', marginBottom: '20px' }}>
+                  <button className="btn btn-primary" onClick={handleSaveEdits} style={{ background: 'var(--c-primary)', color: 'white', border: 'none' }}>
+                    💾 Salvar Alterações
+                  </button>
+                  <button className="btn btn-secondary" onClick={() => setIsEditing(false)}>
+                    Cancelar
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', marginTop: '16px', marginBottom: '20px' }}>
+                  <button className="btn btn-outline" onClick={startEditing} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem', padding: '6px 14px' }}>
+                    <EditIcon size={14} /> Editar Roteiro
+                  </button>
+                  <button
+                    className="btn btn-sm btn-ghost"
+                    onClick={handleGenerate}
+                    disabled={state.isLoading}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    {state.isLoading ? (
+                      <><div className="spinner" style={{ width: '14px', height: '14px' }} /> Regerando...</>
+                    ) : (
+                      <>🔄 Regerar Roteiro com Gemini IA</>
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
           )}
 

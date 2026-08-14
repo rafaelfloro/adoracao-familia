@@ -6,15 +6,14 @@ import { WEEK_TYPE_LABELS } from '../types';
 // Diretrizes para estruturar os roteiros da adoração em família.
 
 const FAMILY_WORSHIP_KNOWLEDGE = `
-Você é um instrutor de adoração em família para as Testemunhas de Jeová.
-Seu papel é criar roteiros de adoração dinâmicos, espirituais, calorosos e práticos.
+Você é um assistente de sugestões para adoração em família das Testemunhas de Jeová.
+Seu papel NÃO é conduzir a reunião nem ensinar verdades bíblicas diretamente, mas sim sugerir ideias práticas de pesquisa, dinâmicas e links do site oficial jw.org.
 
-━━━ DIRETRIZES ESTRUTURAIS ━━━
-1. AMBIENTE: Descontraído, caloroso e participativo (três adultos: Rafael, Gracy e Ricardo).
-2. TONE: Espiritual, encorajador, instrutivo, respeitoso e acolhedor.
-3. OBJETIVO: Fazer com que o tema se aplique de forma prática na rotina diária cristã.
-4. PARÁGRAFOS DO OBJETIVO: Escreva o campo "objective" em 2 ou 3 parágrafos curtos e calorosos. Cada parágrafo será numerado automaticamente no site como um artigo, então garanta que fluam bem de forma lógica.
-5. DINÂMICA: Proponha uma atividade interativa apropriada para três adultos. Seja prático.
+━━━ DIRETRIZES DE ESTILO ━━━
+1. TOM SUGESTIVO: Use sempre um tom de sugestão (ex: "Sugestão de dinâmica", "Ideias para conversar"). Nunca fale como se fosse o dirigente ou instrutor da adoração. Nunca use a primeira pessoa do plural ("nós", "vamos fazer") nem cite nomes específicos de membros da família.
+2. CONCISÃO MÁXIMA: Escreva de forma extremamente curta e objetiva. Evite parágrafos longos, explicações doutrinais complexas ou discursos.
+3. PAPEL DA IA: Você fornece apenas ideias secundárias e pontos de partida. Os membros da família usarão o site jw.org para o estudo real.
+4. SEM ENCERRAMENTO/ORAÇÃO: Não inclua nenhuma oração, encerramento ou consideração final.
 `;
 
 // ─── DuckDuckGo CORS Proxy Search Helper ────────────────────────────────────
@@ -41,11 +40,10 @@ export const searchJwLinks = async (query: string): Promise<JwLink[]> => {
         if (rawUrl.includes('jw.org') && !links.some(l => l.url === rawUrl)) {
           const type = rawUrl.includes('/videos/') ? 'video' :
                        rawUrl.includes('/biblioteca/revistas/') ? 'artigo' : 'estudo';
-          const prefix = type === 'video' ? '[VIDEO]' : type === 'artigo' ? '[ARTIGO]' : '[ESTUDO]';
           links.push({
             title: title || 'Artigo no jw.org',
             url: rawUrl,
-            description: `${prefix} Recurso oficial complementar sobre ${query}.`
+            description: `[${type.toUpperCase()}] Recurso oficial complementar sobre ${query}.`
           });
         }
       } catch (e) {
@@ -107,7 +105,7 @@ ${linksContext}
 Retorne APENAS um JSON válido, sem texto antes ou depois, seguindo esta estrutura exata:
 
 {
-  "objective": "Introdução calorosa de 2-3 parágrafos curtos sobre o tema. Use emojis. Explique por que este tema é relevante.",
+  "objective": "Breve resumo de 1 ou 2 frases curtas sobre o propósito de conversar sobre este tema. Use emojis. Exemplo: '💡 Sugestões de pontos de reflexão sobre como fortalecer a fé e lidar com dúvidas diárias.'",
   
   "bibleVerses": [
     { 
@@ -118,30 +116,29 @@ Retorne APENAS um JSON válido, sem texto antes ou depois, seguindo esta estrutu
   
   "discussionQuestions": [
     { 
-      "question": "Pergunta aberta e reflexiva?",
-      "hint": "Ponto para desenvolvimento ou ângulo de resposta"
+      "question": "Pergunta curta e simples?",
+      "hint": "Ideia muito curta de reflexão baseada no tema"
     }
   ],
   
-  "dynamic": "Passo a passo numerado da dinâmica e aplicação.",
-  
-  "closingThought": "Consideração final motivadora de 1 parágrafo com sugestão de oração temática.",
+  "dynamic": "Sugestão prática de dinâmica para adultos (máximo 2 parágrafos curtos).",
   
   "jwLinks": [
     {
       "title": "Copie o Título exato fornecido acima",
       "url": "Copie a URL exata fornecida acima",
-      "type": "artigo | video | estudo",
       "description": "Explicação curta de 1 frase da utilidade deste link."
     }
   ]
 }
 
 REGRAS RÍGIDAS:
-1. "bibleVerses": 3 a 4 versículos bíblicos.
-2. "discussionQuestions": 3 a 5 perguntas reflexivas.
-3. "jwLinks": Coloque apenas os links que foram listados no contexto acima. Se não houver links, deixe o array vazio [].
-4. NÃO use markdown (como **negrito**, # títulos, etc.) dentro das propriedades do JSON. Use apenas texto plano.
+1. "objective": Máximo 2 frases curtas. Não escreva textos doutrinais ou discursos bíblicos.
+2. "bibleVerses": Apenas 2 ou 3 versículos altamente relevantes.
+3. "discussionQuestions": Apenas 2 ou 3 perguntas reflexivas curtas.
+4. "jwLinks": Coloque apenas os links que foram listados no contexto acima. Se não houver links, deixe o array vazio [].
+5. NÃO use markdown (como **negrito**, # títulos, etc.) dentro das propriedades do JSON. Use apenas texto plano.
+6. NUNCA cite nomes de pessoas e nunca fale como "dirigente" da adoração. Não inclua oração ou encerramento.
 `;
 };
 
@@ -193,11 +190,11 @@ export const generateFamilyWorshipContent = async (
 
   // Ensure fallback structure constraints are filled safely
   return {
-    objective: parsed.objective || 'Reflexão sobre o tema selecionado.',
+    objective: parsed.objective || 'Sugestões de pontos de meditação.',
     bibleVerses: parsed.bibleVerses || [],
     discussionQuestions: parsed.discussionQuestions || [],
-    dynamic: parsed.dynamic || 'Atividade de reflexão familiar conjunta.',
-    closingThought: parsed.closingThought || 'Oração de encerramento.',
+    dynamic: parsed.dynamic || 'Atividade prática de reflexão familiar.',
+    closingThought: parsed.closingThought || '',
     jwLinks: parsed.jwLinks || [],
     generatedAt: new Date().toISOString(),
     themeUsed: week.theme || '',

@@ -216,7 +216,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         generatedContent: content,
         updatedAt: new Date().toISOString(),
       };
-      dispatch({ type: 'UPSERT_WEEK', payload: updatedWeek });
+      await upsertWeek(updatedWeek);
     } catch (err) {
       dispatch({ type: 'SET_ERROR', payload: (err as Error).message });
     } finally {
@@ -282,7 +282,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       updatedWeeks.push(w);
       if (supabase) {
         try {
-          await supabase.from('weeks').upsert(mapToDb(w));
+          const { error } = await supabase.from('weeks').upsert(mapToDb(w));
+          if (error) throw error;
         } catch (e) {
           console.error('Erro ao salvar no Supabase:', e);
         }
@@ -293,6 +294,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const addThemeToQueue = async (theme: string, description?: string, customDynamic?: string): Promise<string> => {
     if (!state.currentUser) throw new Error('Usuário não logado');
+
+    const supabase = getSupabaseClient(state.settings.supabaseUrl, state.settings.supabaseAnonKey);
 
     const today = new Date();
     let year = today.getFullYear();
@@ -332,10 +335,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           dispatch({ type: 'UPSERT_WEEK', payload: w });
           localWeeksState.push(w);
 
-          const supabase = getSupabaseClient(state.settings.supabaseUrl, state.settings.supabaseAnonKey);
           if (supabase) {
             try {
-              await supabase.from('weeks').upsert(mapToDb(w));
+              const { error } = await supabase.from('weeks').upsert(mapToDb(w));
+              if (error) throw error;
             } catch (err) {
               console.error('Erro de sync no Supabase:', err);
             }
@@ -384,6 +387,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const swapWeeks = async (id1: string, id2: string) => {
+    const supabase = getSupabaseClient(state.settings.supabaseUrl, state.settings.supabaseAnonKey);
     const w1 = state.weeks.find((w) => w.id === id1);
     const w2 = state.weeks.find((w) => w.id === id2);
     if (!w1 || !w2) return;
@@ -404,13 +408,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
     saveWeeks(updatedWeeks);
 
-    const supabase = getSupabaseClient(state.settings.supabaseUrl, state.settings.supabaseAnonKey);
     if (supabase) {
       try {
-        await Promise.all([
+        const [res1, res2] = await Promise.all([
           supabase.from('weeks').upsert(mapToDb(updated1)),
           supabase.from('weeks').upsert(mapToDb(updated2)),
         ]);
+        if (res1.error) throw res1.error;
+        if (res2.error) throw res2.error;
       } catch (err) {
         console.error('Erro ao sincronizar troca com Supabase:', err);
         dispatch({ type: 'SET_ERROR', payload: 'Troca de data salva localmente, erro ao sincronizar.' });
